@@ -26,7 +26,6 @@ public class ChatListener implements Listener {
 
         List<String> ranks = dataManager.getConfig().getStringList("players." + e.getPlayer().getUniqueId() + ".ranks");
 
-        // Find Highest Rank
         Rank highest = Rank.MEMBER;
         for (String rName : ranks) {
             try {
@@ -35,11 +34,13 @@ public class ChatListener implements Listener {
             } catch (Exception ignored) {}
         }
 
-        String format = plugin.getConfig().getString("chat-format", "%prefixes% %player%: %message%")
-                .replace("%prefixes%", highest.getDisplay())
-                .replace("%player%", e.getPlayer().getName())
-                .replace("%message%", e.getMessage());
+        String rawFormat = plugin.getConfig().getString("chat-format", "%prefixes% %player%: %message%");
 
-        e.setFormat(ChatColor.translateAlternateColorCodes('&', format.replace("%", "%%")));
+        String formatted = rawFormat
+                .replace("%prefixes%", highest.getDisplay())
+                .replace("%player%", "%1$s")
+                .replace("%message%", "%2$s");
+
+        e.setFormat(ChatColor.translateAlternateColorCodes('&', formatted));
     }
 }
