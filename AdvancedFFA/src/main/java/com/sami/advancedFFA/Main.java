@@ -1,10 +1,10 @@
-package com.sami.advancedRanks;
+package com.sami.advancedFFA;
 
-import com.sami.advancedRanks.commands.RankCommand;
-import com.sami.advancedRanks.commands.RankTabCompleter;
-import com.sami.advancedRanks.listeners.ChatListener;
-import com.sami.advancedRanks.listeners.onJoin;
-import com.sami.advancedRanks.managers.DataManager;
+import com.sami.advancedFFA.commands.RankCommand;
+import com.sami.advancedFFA.commands.RankTabCompleter;
+import com.sami.advancedFFA.listeners.ChatListener;
+import com.sami.advancedFFA.listeners.onJoin;
+import com.sami.advancedFFA.managers.DataManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class Main extends JavaPlugin {
