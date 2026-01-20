@@ -1,0 +1,3 @@
+display-prefixes-chat: true
+display-prefixes-tab: true
+chat-format: "[%prefixes%] &f%player%: &7%message%"

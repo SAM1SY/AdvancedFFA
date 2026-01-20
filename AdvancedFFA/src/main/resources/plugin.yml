@@ -1,0 +1,10 @@
+name: AdvancedRanks
+version: '1.0'
+main: com.sami.advancedRanks.Main
+api-version: '1.21'
+authors: [ SAM1_SY ]
+description: A custom ranks plugin with multiple rank support.
+commands:
+  rank:
+    description: Manage player ranks
+    permission: advancedranks.use

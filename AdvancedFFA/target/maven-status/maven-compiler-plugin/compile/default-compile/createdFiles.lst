@@ -1,0 +1,7 @@
+com\sami\advancedRanks\Rank.class
+com\sami\advancedRanks\listeners\onJoin.class
+com\sami\advancedRanks\Main.class
+com\sami\advancedRanks\commands\RankCommand.class
+com\sami\advancedRanks\listeners\ChatListener.class
+com\sami\advancedRanks\commands\RankTabCompleter.class
+com\sami\advancedRanks\managers\DataManager.class
