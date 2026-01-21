@@ -3,6 +3,7 @@ package com.sami.advancedFFA.commands;
 import com.sami.advancedFFA.Main;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -42,7 +43,7 @@ public class SpawnCommand implements CommandExecutor {
 
         Location startLoc = p.getLocation().clone();
 
-        p.playSound(p.getLocation(), Sound.BLOCK_BELL_RESONATE, 1.0f, 0.75f);
+        p.playSound(p.getLocation(), Sound.BLOCK_BELL_RESONATE, 1.0f, 0.7f);
 
         BukkitRunnable teleportTask = new BukkitRunnable() {
             int seconds = 3;
@@ -53,6 +54,7 @@ public class SpawnCommand implements CommandExecutor {
                     p.sendMessage("§c§lERROR §8» §7Teleport cancelled! You moved.");
                     p.stopSound(Sound.BLOCK_BELL_RESONATE);
                     p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 2f, .9f);
+                    p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§4§lYou moved!"));
                     cancelTeleport(p.getUniqueId());
                     this.cancel();
                     return;
