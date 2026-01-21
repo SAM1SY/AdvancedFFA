@@ -12,20 +12,22 @@ import org.bukkit.permissions.PermissionAttachment;
 
 import java.util.List;
 
-public class onJoin implements Listener {
+public class RankListener implements Listener {
 
     private final Main plugin;
     private final DataManager dataManager;
 
-    public onJoin(Main plugin, DataManager dataManager) {
+    public RankListener(Main plugin, DataManager dataManager) {
         this.plugin = plugin;
         this.dataManager = dataManager;
     }
 
     @EventHandler
-    public void onJoin(PlayerJoinEvent e) {
+    public void onJoinEvent(PlayerJoinEvent e) {
         Player p = e.getPlayer();
         String uuid = p.getUniqueId().toString();
+
+
         dataManager.getConfig().set("players." + uuid + ".name", p.getName());
 
         List<String> ranks = dataManager.getConfig().getStringList("players." + uuid + ".ranks");
@@ -35,21 +37,26 @@ public class onJoin implements Listener {
             dataManager.saveConfig();
         }
 
-        // Apply Highest Rank to Tab List
+        // Tab List
         Rank highest = Rank.MEMBER;
         for (String rName : ranks) {
             try {
-                Rank r = Rank.valueOf(rName);
+                Rank r = Rank.valueOf(rName.toUpperCase());
                 if (r.ordinal() < highest.ordinal()) highest = r;
-            } catch (Exception ignored) {}
+            } catch (IllegalArgumentException ignored) {}
         }
-        p.setPlayerListName(ChatColor.translateAlternateColorCodes('&', highest.getDisplay() + " " + p.getName()));
 
-        // Apply Perms
+        String tabFormat = highest.getDisplay() + " " + p.getName();
+        p.setPlayerListName(ChatColor.translateAlternateColorCodes('&', tabFormat));
+
         PermissionAttachment att = p.addAttachment(plugin);
         for (String rName : ranks) {
-            List<String> perms = plugin.getPermsManager().getConfig().getStringList(rName);
-            for (String perm : perms) att.setPermission(perm, true);
+            List<String> perms = plugin.getPermsManager().getConfig().getStringList(rName.toUpperCase());
+            if (perms != null) {
+                for (String perm : perms) {
+                    att.setPermission(perm, true);
+                }
+            }
         }
     }
 }

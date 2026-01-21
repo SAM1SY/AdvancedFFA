@@ -7,4 +7,7 @@ description: A custom FFA plugin.
 commands:
   rank:
     description: Manage player ranks
-    permission: advancedranks.use
+    permission: advancedFFA.rank.use
+  spawnnpc:
+    description: Spawns the Standard Arena NPC
+    permission: advancedFFA.npc.spawn
