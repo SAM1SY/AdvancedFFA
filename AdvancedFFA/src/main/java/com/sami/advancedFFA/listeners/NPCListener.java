@@ -1,19 +1,21 @@
 package com.sami.advancedFFA.listeners;
 
 import com.sami.advancedFFA.Main;
+import net.citizensnpcs.api.CitizensAPI;
+import net.citizensnpcs.api.event.NPCRightClickEvent;
+import net.citizensnpcs.api.npc.NPC;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerInteractAtEntityEvent;
-
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import java.util.Random;
 
 public class NPCListener implements Listener {
-
     private final Main plugin;
     private final Random random = new Random();
 
@@ -21,32 +23,55 @@ public class NPCListener implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler
-    public void onNPCInteract(PlayerInteractAtEntityEvent e) {
-        if (!(e.getRightClicked() instanceof ArmorStand)) return;
-
-        ArmorStand npc = (ArmorStand) e.getRightClicked();
-        if (npc.getCustomName() != null && npc.getCustomName().contains("Standard Arena")) {
-            e.setCancelled(true);
-            teleportToArena(e.getPlayer());
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onCitizensClick(NPCRightClickEvent e) {
+        String name = ChatColor.stripColor(e.getNPC().getName());
+        if (name.equalsIgnoreCase("Standard Arena")) {
+            teleportToArena(e.getClicker(), "standard");
         }
     }
 
-    private void teleportToArena(Player player) {
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onNPCClick(PlayerInteractEntityEvent e) {
+        if (e.getRightClicked().hasMetadata("NPC")) {
+            NPC npc = CitizensAPI.getNPCRegistry().getNPC(e.getRightClicked());
+
+            if (npc != null) {
+                String name = ChatColor.stripColor(npc.getName());
+                if (name.equalsIgnoreCase("Standard Arena")) {
+                    e.setCancelled(true);
+                    teleportToArena(e.getPlayer(), "Standard");
+                }
+            }
+        }
+    }
+
+    public void teleportToArena(Player p, String mode) {
         World arenaWorld = Bukkit.getWorld("arena");
         if (arenaWorld == null) {
-            player.sendMessage("§cError: 'arena' world not found.");
+            p.sendMessage("§cError: Arena world 'arena' not found.");
             return;
         }
 
-        double angle = random.nextDouble() * 2 * Math.PI;
-        double r = 25 * Math.sqrt(random.nextDouble());
-        double x = r * Math.cos(angle);
-        double z = r * Math.sin(angle);
+        String path = "arenas." + mode.toLowerCase();
 
-        Location teleportLoc = new Location(arenaWorld, x + 0.5, 0.0, z + 0.5);
+        double centerX = plugin.getConfig().getDouble(path + ".center-x");
+        double centerZ = plugin.getConfig().getDouble(path + ".center-z");
+        double yLevel = plugin.getConfig().getDouble(path + ".y-level");
+        double radius = plugin.getConfig().getDouble(path + ".spawn-radius");
 
-        player.teleport(teleportLoc);
-        player.sendMessage("§a§lSERVER §8» §7Sending you to §fStandard Arena§7...");
+        double x = centerX + (random.nextDouble() * radius * 2) - radius;
+        double z = centerZ + (random.nextDouble() * radius * 2) - radius;
+
+        Location spawnLoc = new Location(arenaWorld, x, yLevel, z);
+
+        p.teleport(spawnLoc);
+
+        if (plugin.getKitManager() != null) {
+            plugin.getKitManager().giveKit(p, mode);
+        }
+
+        p.sendTitle("§a§l" + mode.toUpperCase(), "§7Good luck!", 5, 20, 5);
+
     }
 }

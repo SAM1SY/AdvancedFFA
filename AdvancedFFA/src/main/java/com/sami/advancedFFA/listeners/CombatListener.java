@@ -2,14 +2,12 @@ package com.sami.advancedFFA.listeners;
 
 import com.sami.advancedFFA.Main;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
@@ -32,9 +30,20 @@ public class CombatListener implements Listener {
             Player victim = (Player) e.getEntity();
             Player attacker = (Player) e.getDamager();
 
+            if (victim.isInvulnerable() || attacker.isInvulnerable()) {
+                e.setCancelled(true);
+                return;
+            }
+
             tagPlayer(victim);
             tagPlayer(attacker);
         }
+    }
+
+    @EventHandler
+    public void onHungerChange(FoodLevelChangeEvent e) {
+        e.setCancelled(true);
+        e.getEntity().setFoodLevel(20);
     }
 
     private void tagPlayer(Player player) {
@@ -48,6 +57,11 @@ public class CombatListener implements Listener {
     public void onCommand(PlayerCommandPreprocessEvent e) {
         Player p = e.getPlayer();
         if (isTagged(p) && !p.isOp()) {
+            if (e.getMessage().toLowerCase().startsWith("/kit")) {
+                e.setCancelled(true);
+                p.sendMessage("§cYou cannot use the kit editor while in combat!");
+                return;
+            }
             e.setCancelled(true);
             p.sendMessage("§cYou cannot use commands while in combat!");
         }
@@ -57,7 +71,6 @@ public class CombatListener implements Listener {
     public void onQuit(PlayerQuitEvent e) {
         Player p = e.getPlayer();
         if (isTagged(p) && !p.isOp()) {
-            // Tempban for 30 minutes
             String reason = "§cLogged out during combat!";
             Bukkit.getBanList(org.bukkit.BanList.Type.NAME).addBan(p.getName(), reason,
                     new java.util.Date(System.currentTimeMillis() + (30 * 60 * 1000L)), "Console");
@@ -66,31 +79,19 @@ public class CombatListener implements Listener {
         combatLog.remove(p.getUniqueId());
     }
 
-    @EventHandler
-    public void onDeath(PlayerDeathEvent e) {
-        Player victim = e.getEntity();
-        combatLog.remove(victim.getUniqueId()); // Clear tag on death
+    public boolean isTagged(Player p) {
+        UUID uuid = p.getUniqueId();
+        if (!combatLog.containsKey(uuid)) return false;
 
-        e.getDrops().clear();
-        victim.getInventory().clear();
-
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            victim.spigot().respawn();
-            World spawnWorld = Bukkit.getWorld("spawn");
-            if (spawnWorld != null) {
-                Location spawnLoc = new Location(spawnWorld, 0.5, 0, 0.5, -90, 0);
-                victim.teleport(spawnLoc);
-            }
-        }, 1L);
-    }
-
-    private boolean isTagged(Player p) {
-        if (!combatLog.containsKey(p.getUniqueId())) return false;
-        if (System.currentTimeMillis() > combatLog.get(p.getUniqueId())) {
-            combatLog.remove(p.getUniqueId());
+        if (System.currentTimeMillis() > combatLog.get(uuid)) {
+            combatLog.remove(uuid);
             p.sendMessage("§a§lCOMBAT §8» §7You are no longer in combat.");
             return false;
         }
         return true;
+    }
+
+    public void removeTag(UUID uuid) {
+        combatLog.remove(uuid);
     }
 }

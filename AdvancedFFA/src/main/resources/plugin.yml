@@ -8,6 +8,8 @@ commands:
   rank:
     description: Manage player ranks
     permission: advancedFFA.rank.use
-  spawnnpc:
-    description: Spawns the Standard Arena NPC
-    permission: advancedFFA.npc.spawn
+  kit:
+    description: Kit editor
+    permission: advancedFFA.kiteditor.use
+  spawn:
+    description: Teleports to the spawn.

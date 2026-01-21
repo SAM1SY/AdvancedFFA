@@ -1,43 +1,50 @@
 package com.sami.advancedFFA;
 
-import com.sami.advancedFFA.commands.NPCCommand;
-import com.sami.advancedFFA.commands.RankCommand;
-import com.sami.advancedFFA.commands.RankTabCompleter;
+import com.sami.advancedFFA.commands.*;
 import com.sami.advancedFFA.listeners.*;
-import com.sami.advancedFFA.managers.DataManager;
-import com.sami.advancedFFA.managers.DatabaseManager;
-import com.sami.advancedFFA.managers.NPCManager;
-import com.sami.advancedFFA.managers.StatsManager;
+import com.sami.advancedFFA.managers.*;
 import org.bukkit.Bukkit;
 import org.bukkit.WorldCreator;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class Main extends JavaPlugin {
 
+    private PlayerDataManager playerDataManager;
     private DataManager dataManager;
     private DataManager permsManager;
-    private DatabaseManager databaseManager;
     private StatsManager statsManager;
     private NPCManager npcManager;
+    private KitManager kitManager;
+
+    private CombatListener combatListener;
 
     @Override
     public void onEnable() {
-        // 1. Setup Folder and Config
         if (!getDataFolder().exists()) {
             getDataFolder().mkdirs();
         }
         saveDefaultConfig();
 
+        if (!Bukkit.getPluginManager().isPluginEnabled("Citizens")) {
+            getLogger().severe("Citizens 2.0 not found or disabled! NPCs will not work.");
+
+        }
+
         loadRequiredWorlds();
 
+        this.playerDataManager = new PlayerDataManager(this);
         this.dataManager = new DataManager(this, "ranks.yml");
         this.permsManager = new DataManager(this, "perms.yml");
-        this.databaseManager = new DatabaseManager(this);
         this.statsManager = new StatsManager(this);
         this.npcManager = new NPCManager(this);
+        this.kitManager = new KitManager(this);
+
+        this.combatListener = new CombatListener(this);
 
         registerCommands();
         registerListeners();
+
+        startNpcTasks();
 
         getLogger().info("========================================");
         getLogger().info("   AdvancedFFA Rank & Level System      ");
@@ -46,14 +53,13 @@ public final class Main extends JavaPlugin {
     }
 
     private void loadRequiredWorlds() {
-
         if (Bukkit.getWorld("arena") == null) {
-            getLogger().info("Loading world: 'arena'...");
+            getLogger().info("Creating/Loading world: 'arena'...");
             Bukkit.createWorld(new WorldCreator("arena"));
         }
 
         if (Bukkit.getWorld("spawn") == null) {
-            getLogger().info("Loading world: 'spawn'...");
+            getLogger().info("Creating/Loading world: 'spawn'...");
             Bukkit.createWorld(new WorldCreator("spawn"));
         }
     }
@@ -63,25 +69,40 @@ public final class Main extends JavaPlugin {
             getCommand("rank").setExecutor(new RankCommand(this, dataManager));
             getCommand("rank").setTabCompleter(new RankTabCompleter());
         }
-        if (getCommand("spawnnpc") != null) {
-            getCommand("spawnnpc").setExecutor(new NPCCommand(this));
+        if (getCommand("kit") != null) {
+            getCommand("kit").setExecutor(new KitCommand(this));
+        }
+        if (getCommand("spawn") != null) {
+            getCommand("spawn").setExecutor(new SpawnCommand(this));
         }
     }
 
     private void registerListeners() {
+        getServer().getPluginManager().registerEvents(new StatsListener(this), this);
         getServer().getPluginManager().registerEvents(new RankListener(this, dataManager), this);
         getServer().getPluginManager().registerEvents(new ChatListener(this, dataManager), this);
+        getServer().getPluginManager().registerEvents(new JoinListener(this), this);
 
-        getServer().getPluginManager().registerEvents(new StatsListener(this), this);
-
-        getServer().getPluginManager().registerEvents(new CombatListener(this), this);
+        getServer().getPluginManager().registerEvents(this.combatListener, this);
+        getServer().getPluginManager().registerEvents(new DeathListener(this), this);
         getServer().getPluginManager().registerEvents(new NPCListener(this), this);
 
-        getServer().getPluginManager().registerEvents(new JoinListener(this), this);
+        getServer().getPluginManager().registerEvents(new InventoryListener(this), this);
+        getServer().getPluginManager().registerEvents(new LeaderboardListener(this), this);
+        getServer().getPluginManager().registerEvents(new SpawnProtectionListener(this), this);
+    }
+
+    private void startNpcTasks() {
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            if (Bukkit.getPluginManager().isPluginEnabled("Citizens")) {
+                this.npcManager.createStandardArenaNPC();
+            }
+        }, 100L);
     }
 
     @Override
     public void onDisable() {
+        Bukkit.getScheduler().cancelTasks(this);
         if (dataManager != null) dataManager.saveConfig();
         if (permsManager != null) permsManager.saveConfig();
 
@@ -91,13 +112,15 @@ public final class Main extends JavaPlugin {
             });
         }
 
-        getLogger().info("AdvancedFFA data saved and plugin disabled.");
+        getLogger().info("AdvancedFFA: All data has been securely saved. Plugin disabled.");
     }
 
-    // Getters
-    public DataManager getDataManager() { return dataManager; }
+    // --- All Getters ---
+    public PlayerDataManager getPlayerDataManager() { return playerDataManager; }
+    public DataManager getDataManager() { return dataManager; } // Added this getter
     public DataManager getPermsManager() { return permsManager; }
-    public DatabaseManager getDatabaseManager() { return databaseManager; }
     public StatsManager getStatsManager() { return statsManager; }
     public NPCManager getNpcManager() { return npcManager; }
+    public KitManager getKitManager() { return kitManager; }
+    public CombatListener getCombatListener() { return combatListener; }
 }
