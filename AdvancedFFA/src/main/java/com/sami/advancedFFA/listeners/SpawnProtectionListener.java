@@ -27,30 +27,23 @@ public class SpawnProtectionListener implements Listener {
     @EventHandler
     public void onBlockBreak(BlockBreakEvent e) {
         Player p = e.getPlayer();
-        if (isSpawnWorld(p.getWorld().getName())) {
-            // Allow OPs in Creative to build
-            if (p.isOp() && p.getGameMode() == GameMode.CREATIVE) return;
+        if (p.isOp() && p.getGameMode() == GameMode.CREATIVE) return;
 
-            e.setCancelled(true);
-        }
+        e.setCancelled(true);
     }
 
     @EventHandler
     public void onBlockInteract(PlayerInteractEvent e) {
         Player p = e.getPlayer();
-        if (isSpawnWorld(p.getWorld().getName())) {
-            e.setCancelled(true);
-        }
+        e.setCancelled(true);
     }
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent e) {
         Player p = e.getPlayer();
-        if (isSpawnWorld(p.getWorld().getName())) {
-            if (p.isOp() && p.getGameMode() == GameMode.CREATIVE) return;
+        if (p.isOp() && p.getGameMode() == GameMode.CREATIVE) return;
 
-            e.setCancelled(true);
-        }
+        e.setCancelled(true);
     }
 
     @EventHandler

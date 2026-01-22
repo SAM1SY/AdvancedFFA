@@ -42,8 +42,6 @@ public class DeathListener implements Listener {
 
             int killerStreak = plugin.getKitManager().getStreak(killer.getUniqueId());
             killer.sendMessage("§a§lKILL §8» §7You killed §f" + victim.getName() + " §8[§eStreak: " + killerStreak + "§8]");
-
-            killer.getInventory().addItem(new ItemStack(Material.GOLDEN_APPLE, 1));
         }
 
         e.getDrops().clear();
