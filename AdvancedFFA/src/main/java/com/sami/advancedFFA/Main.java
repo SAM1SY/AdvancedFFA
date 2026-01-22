@@ -4,6 +4,8 @@ import com.sami.advancedFFA.commands.*;
 import com.sami.advancedFFA.listeners.*;
 import com.sami.advancedFFA.managers.*;
 import com.sami.advancedFFA.traits.GuardTrait;
+import net.citizensnpcs.api.CitizensAPI;
+import net.citizensnpcs.api.trait.TraitInfo;
 import org.bukkit.Bukkit;
 import org.bukkit.WorldCreator;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -16,7 +18,6 @@ public final class Main extends JavaPlugin {
     private StatsManager statsManager;
     private NPCManager npcManager;
     private KitManager kitManager;
-
     private CombatListener combatListener;
 
     @Override
@@ -26,16 +27,15 @@ public final class Main extends JavaPlugin {
         }
         saveDefaultConfig();
 
-        if (!Bukkit.getPluginManager().isPluginEnabled("Citizens")) {
-            getLogger().severe("Citizens 2.0 not found or disabled! NPCs will not work.");
-
-        }
-
         if (Bukkit.getPluginManager().isPluginEnabled("Citizens")) {
-            net.citizensnpcs.api.CitizensAPI.getTraitFactory().registerTrait(
-                    net.citizensnpcs.api.trait.TraitInfo.create(com.sami.advancedFFA.traits.GuardTrait.class)
-            );
-            getLogger().info("GuardTrait registered successfully!");
+            Bukkit.getScheduler().runTask(this, () -> {
+                CitizensAPI.getTraitFactory().registerTrait(
+                        TraitInfo.create(GuardTrait.class)
+                );
+                getLogger().info("GuardTrait registered successfully!");
+            });
+        } else {
+            getLogger().severe("Citizens 2.0 not found! NPCs will not work correctly.");
         }
 
         loadRequiredWorlds();
@@ -46,7 +46,6 @@ public final class Main extends JavaPlugin {
         this.statsManager = new StatsManager(this);
         this.npcManager = new NPCManager(this);
         this.kitManager = new KitManager(this);
-
         this.combatListener = new CombatListener(this);
 
         registerCommands();
@@ -91,11 +90,9 @@ public final class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new RankListener(this, dataManager), this);
         getServer().getPluginManager().registerEvents(new ChatListener(this, dataManager), this);
         getServer().getPluginManager().registerEvents(new JoinListener(this), this);
-
         getServer().getPluginManager().registerEvents(this.combatListener, this);
         getServer().getPluginManager().registerEvents(new DeathListener(this), this);
         getServer().getPluginManager().registerEvents(new NPCListener(this), this);
-
         getServer().getPluginManager().registerEvents(new InventoryListener(this), this);
         getServer().getPluginManager().registerEvents(new LeaderboardListener(this), this);
         getServer().getPluginManager().registerEvents(new SpawnProtectionListener(this), this);
@@ -106,7 +103,7 @@ public final class Main extends JavaPlugin {
             if (Bukkit.getPluginManager().isPluginEnabled("Citizens")) {
                 this.npcManager.createStandardArenaNPC();
             }
-        }, 100L);
+        }, 120L);
     }
 
     private void LeaderboardUpdating() {
@@ -133,7 +130,7 @@ public final class Main extends JavaPlugin {
 
     // --- All Getters ---
     public PlayerDataManager getPlayerDataManager() { return playerDataManager; }
-    public DataManager getDataManager() { return dataManager; } // Added this getter
+    public DataManager getDataManager() { return dataManager; }
     public DataManager getPermsManager() { return permsManager; }
     public StatsManager getStatsManager() { return statsManager; }
     public NPCManager getNpcManager() { return npcManager; }
