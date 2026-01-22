@@ -4,10 +4,7 @@ import com.sami.advancedFFA.Main;
 import net.citizensnpcs.api.CitizensAPI;
 import net.citizensnpcs.api.event.NPCRightClickEvent;
 import net.citizensnpcs.api.npc.NPC;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -66,6 +63,7 @@ public class NPCListener implements Listener {
         Location spawnLoc = new Location(arenaWorld, x, yLevel, z);
 
         p.teleport(spawnLoc);
+        p.playSound(p.getLocation(), Sound.ENTITY_ARMADILLO_AMBIENT, 1f, 2f);
 
         if (plugin.getKitManager() != null) {
             plugin.getKitManager().giveKit(p, mode);
