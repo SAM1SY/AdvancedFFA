@@ -29,10 +29,13 @@ public final class Main extends JavaPlugin {
         if (!Bukkit.getPluginManager().isPluginEnabled("Citizens")) {
             getLogger().severe("Citizens 2.0 not found or disabled! NPCs will not work.");
 
-        } else {
+        }
+
+        if (Bukkit.getPluginManager().isPluginEnabled("Citizens")) {
             net.citizensnpcs.api.CitizensAPI.getTraitFactory().registerTrait(
                     net.citizensnpcs.api.trait.TraitInfo.create(com.sami.advancedFFA.traits.GuardTrait.class)
             );
+            getLogger().info("GuardTrait registered successfully!");
         }
 
         loadRequiredWorlds();
