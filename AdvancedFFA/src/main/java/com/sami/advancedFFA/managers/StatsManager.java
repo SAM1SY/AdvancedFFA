@@ -11,14 +11,62 @@ import java.util.UUID;
 public class StatsManager {
     private final Main plugin;
     private final Map<UUID, PlayerStats> statsCache = new HashMap<>();
-
     private final Map<String, Map<String, Integer>> globalLeaderboardCache = new HashMap<>();
 
     public StatsManager(Main plugin) { this.plugin = plugin; }
 
     public static class PlayerStats {
         public int kills, deaths, level;
-        public PlayerStats(int k, int d, int l) { this.kills = k; this.deaths = d; this.level = l; }
+        public int currentStreak = 0;
+        public int bestStreak;
+
+        public PlayerStats(int k, int d, int l, int bs) {
+            this.kills = k;
+            this.deaths = d;
+            this.level = l;
+            this.bestStreak = bs;
+        }
+    }
+
+    public void loadPlayer(Player player) {
+        int[] data = plugin.getPlayerDataManager().loadStats(player.getUniqueId());
+        int best = plugin.getPlayerDataManager().loadBestStreak(player.getUniqueId());
+        statsCache.put(player.getUniqueId(), new PlayerStats(data[0], data[1], data[2], best));
+    }
+
+    public void saveAndUnloadPlayer(Player player) {
+        PlayerStats s = statsCache.get(player.getUniqueId());
+        if (s != null) {
+            syncOnlinePlayerToData(player);
+            statsCache.remove(player.getUniqueId());
+        }
+    }
+
+    public void addKill(Player p) {
+        PlayerStats s = statsCache.get(p.getUniqueId());
+        if (s != null) {
+            s.kills++;
+            s.currentStreak++;
+
+            if (s.currentStreak > s.bestStreak) {
+                s.bestStreak = s.currentStreak;
+                plugin.getPlayerDataManager().saveBestStreak(p.getUniqueId(), s.bestStreak);
+            }
+
+            int newLvl = (s.kills / 50) + 1;
+            if (newLvl > s.level) {
+                s.level = newLvl;
+                p.sendMessage("§b§lLEVEL UP §8» §7You are now Level §f" + s.level);
+            }
+        }
+    }
+
+    public void addDeath(Player p) {
+        PlayerStats s = statsCache.get(p.getUniqueId());
+        if (s != null) {
+            s.deaths++;
+            s.currentStreak = 0;
+        }
     }
 
     public void updateGlobalLeaderboards() {
@@ -31,11 +79,13 @@ public class StatsManager {
             globalLeaderboardCache.put(key, plugin.getPlayerDataManager().getTop10(key));
         }
     }
+
     private void syncOnlinePlayerToData(Player player) {
         PlayerStats s = statsCache.get(player.getUniqueId());
         if (s != null) {
             plugin.getPlayerDataManager().saveName(player.getUniqueId(), player.getName());
             plugin.getPlayerDataManager().saveStats(player.getUniqueId(), s.kills, s.deaths, s.level);
+            plugin.getPlayerDataManager().saveBestStreak(player.getUniqueId(), s.bestStreak);
         }
     }
 
@@ -43,43 +93,12 @@ public class StatsManager {
         return globalLeaderboardCache.getOrDefault(statKey, new LinkedHashMap<>());
     }
 
-    public void loadPlayer(Player player) {
-        int[] data = plugin.getPlayerDataManager().loadStats(player.getUniqueId());
-        statsCache.put(player.getUniqueId(), new PlayerStats(data[0], data[1], data[2]));
-    }
-
-    public void saveAndUnloadPlayer(Player player) {
-        PlayerStats s = statsCache.get(player.getUniqueId());
-        if (s != null) {
-            plugin.getPlayerDataManager().saveStats(player.getUniqueId(), s.kills, s.deaths, s.level);
-            statsCache.remove(player.getUniqueId());
-        }
-    }
-
-    public void addKill(Player p) {
-        PlayerStats s = statsCache.get(p.getUniqueId());
-        if (s != null) {
-            s.kills++;
-            int newLvl = (s.kills / 50) + 1;
-            if (newLvl > s.level) {
-                s.level = newLvl;
-                p.sendMessage("§b§lLEVEL UP §8» §7You are now Level §f" + s.level);
-            }
-        }
-    }
+    public int getLevel(UUID uuid) { return statsCache.containsKey(uuid) ? statsCache.get(uuid).level : 1; }
 
     public String getLevelColor(UUID uuid) {
-        int level = getLevel(uuid);
-        if (level >= 100) return "§4";
-        if (level >= 50) return "§c";
-        if (level >= 10) return "§e";
+        int lvl = getLevel(uuid);
+        if (lvl >= 50) return "§c";
+        if (lvl >= 25) return "§e";
         return "§7";
     }
-
-    public void addDeath(Player p) {
-        PlayerStats s = statsCache.get(p.getUniqueId());
-        if (s != null) s.deaths++;
-    }
-
-    public int getLevel(UUID uuid) { return statsCache.containsKey(uuid) ? statsCache.get(uuid).level : 1; }
 }

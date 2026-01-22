@@ -1,7 +1,6 @@
 package com.sami.advancedFFA.managers;
 
 import com.sami.advancedFFA.Main;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -102,21 +101,22 @@ public class PlayerDataManager {
     }
 
     public Map<String, Integer> getTop10(String statKey) {
-        Map<String, Integer> killsMap = new HashMap<>();
+        Map<String, Integer> dataMap = new HashMap<>();
         ConfigurationSection playersSection = config.getConfigurationSection("players");
 
         if (playersSection == null) return new LinkedHashMap<>();
 
         for (String uuidStr : playersSection.getKeys(false)) {
+            // Updated Path to match saveStats and saveBestStreak
             int value = config.getInt("players." + uuidStr + ".stats." + statKey, 0);
             String name = config.getString("players." + uuidStr + ".name");
 
             if (name != null) {
-                killsMap.put(name, value);
+                dataMap.put(name, value);
             }
         }
 
-        return killsMap.entrySet().stream()
+        return dataMap.entrySet().stream()
                 .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
                 .limit(10)
                 .collect(Collectors.toMap(
