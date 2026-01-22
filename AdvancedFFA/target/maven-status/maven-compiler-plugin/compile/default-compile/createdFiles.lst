@@ -1,5 +1,4 @@
 com\sami\advancedFFA\listeners\JoinListener.class
-com\sami\advancedFFA\managers\NPCManager$1.class
 com\sami\advancedFFA\managers\StatsManager$PlayerStats.class
 com\sami\advancedFFA\commands\SpawnCommand.class
 com\sami\advancedFFA\Rank.class
@@ -24,4 +23,5 @@ com\sami\advancedFFA\listeners\LeaderboardListener.class
 com\sami\advancedFFA\listeners\StatsListener.class
 com\sami\advancedFFA\listeners\onQuit.class
 com\sami\advancedFFA\listeners\NPCListener.class
+com\sami\advancedFFA\traits\GuardTrait.class
 com\sami\advancedFFA\managers\PlayerDataManager.class

@@ -3,6 +3,7 @@ package com.sami.advancedFFA;
 import com.sami.advancedFFA.commands.*;
 import com.sami.advancedFFA.listeners.*;
 import com.sami.advancedFFA.managers.*;
+import com.sami.advancedFFA.traits.GuardTrait;
 import org.bukkit.Bukkit;
 import org.bukkit.WorldCreator;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -28,6 +29,10 @@ public final class Main extends JavaPlugin {
         if (!Bukkit.getPluginManager().isPluginEnabled("Citizens")) {
             getLogger().severe("Citizens 2.0 not found or disabled! NPCs will not work.");
 
+        } else {
+            net.citizensnpcs.api.CitizensAPI.getTraitFactory().registerTrait(
+                    net.citizensnpcs.api.trait.TraitInfo.create(com.sami.advancedFFA.traits.GuardTrait.class)
+            );
         }
 
         loadRequiredWorlds();

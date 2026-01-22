@@ -1,7 +1,7 @@
 package com.sami.advancedFFA.listeners;
 
 import com.sami.advancedFFA.Main;
-import net.citizensnpcs.api.CitizensAPI;
+import com.sami.advancedFFA.traits.GuardTrait;
 import net.citizensnpcs.api.event.NPCRightClickEvent;
 import net.citizensnpcs.api.npc.NPC;
 import org.bukkit.*;
@@ -9,7 +9,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerInteractEntityEvent;
+
 import java.util.Random;
 
 public class NPCListener implements Listener {
@@ -22,23 +22,14 @@ public class NPCListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onCitizensClick(NPCRightClickEvent e) {
-        String name = ChatColor.stripColor(e.getNPC().getName());
-        if (name.equalsIgnoreCase("Standard Arena")) {
-            teleportToArena(e.getClicker(), "standard");
-        }
-    }
+        NPC npc = e.getNPC();
+        Player player = e.getClicker();
 
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void onNPCClick(PlayerInteractEntityEvent e) {
-        if (e.getRightClicked().hasMetadata("NPC")) {
-            NPC npc = CitizensAPI.getNPCRegistry().getNPC(e.getRightClicked());
+        if (npc.hasTrait(GuardTrait.class)) {
+            String name = ChatColor.stripColor(npc.getName());
 
-            if (npc != null) {
-                String name = ChatColor.stripColor(npc.getName());
-                if (name.equalsIgnoreCase("Standard Arena")) {
-                    e.setCancelled(true);
-                    teleportToArena(e.getPlayer(), "Standard");
-                }
+            if (name.equalsIgnoreCase("Standard Arena")) {
+                teleportToArena(player, "Standard");
             }
         }
     }
@@ -56,7 +47,6 @@ public class NPCListener implements Listener {
         double centerZ = plugin.getConfig().getDouble(path + ".center-z");
         double yLevel = plugin.getConfig().getDouble(path + ".y-level");
         double radius = plugin.getConfig().getDouble(path + ".spawn-radius");
-
         double x = centerX + (random.nextDouble() * radius * 2) - radius;
         double z = centerZ + (random.nextDouble() * radius * 2) - radius;
 
@@ -70,6 +60,5 @@ public class NPCListener implements Listener {
         }
 
         p.sendTitle("§a§l" + mode.toUpperCase(), "§7Good luck!", 5, 20, 5);
-
     }
 }
