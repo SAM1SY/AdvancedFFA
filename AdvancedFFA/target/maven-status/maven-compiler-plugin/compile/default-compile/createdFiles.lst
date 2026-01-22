@@ -10,6 +10,7 @@ com\sami\advancedFFA\managers\KitManager.class
 com\sami\advancedFFA\listeners\CombatListener.class
 com\sami\advancedFFA\listeners\DeathListener.class
 com\sami\advancedFFA\managers\DataManager.class
+com\sami\advancedFFA\listeners\CombatListener$1.class
 com\sami\advancedFFA\Main.class
 com\sami\advancedFFA\listeners\InventoryListener.class
 com\sami\advancedFFA\commands\RankCommand.class
