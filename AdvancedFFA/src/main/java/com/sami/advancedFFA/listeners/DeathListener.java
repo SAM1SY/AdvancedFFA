@@ -25,7 +25,6 @@ public class DeathListener implements Listener {
         Player victim = e.getEntity();
         Player killer = victim.getKiller();
 
-        // LINE 28 FIX: Get the streak BEFORE resetting it
         int lostStreak = plugin.getKitManager().getStreak(victim.getUniqueId());
 
         if (lostStreak >= 5) {
@@ -41,7 +40,6 @@ public class DeathListener implements Listener {
             plugin.getKitManager().addKill(killer);
             plugin.getStatsManager().addKill(killer);
 
-            // LINE 42 FIX: Fetch the streak value correctly
             int killerStreak = plugin.getKitManager().getStreak(killer.getUniqueId());
             killer.sendMessage("§a§lKILL §8» §7You killed §f" + victim.getName() + " §8[§eStreak: " + killerStreak + "§8]");
 
@@ -49,18 +47,16 @@ public class DeathListener implements Listener {
         }
 
         e.getDrops().clear();
-        // victim.getInventory().clear(); // Already cleared by e.getDrops().clear() usually, but keep if needed
 
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (victim.isOnline()) { // Check isOnline instead of isDead for the respawn logic
+            if (victim.isOnline()) {
                 victim.spigot().respawn();
 
                 giveLeaderboardItem(victim);
 
                 World spawnWorld = Bukkit.getWorld("spawn");
                 if (spawnWorld != null) {
-                    // Make sure Y is not 0.0 or they might fall through the world
-                    Location spawnLoc = new Location(spawnWorld, 0.5, 64.0, 0.5, -90, 0);
+                    Location spawnLoc = new Location(spawnWorld, 0.5, 0, 0.5, -90, 0);
                     victim.teleport(spawnLoc);
                 }
             }
