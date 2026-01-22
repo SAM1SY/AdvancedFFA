@@ -37,7 +37,6 @@ public class RankListener implements Listener {
             dataManager.saveConfig();
         }
 
-        // Tab List
         Rank highest = Rank.MEMBER;
         for (String rName : ranks) {
             try {

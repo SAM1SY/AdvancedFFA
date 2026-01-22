@@ -80,6 +80,7 @@ public class RankCommand implements CommandExecutor {
                     Rank rank = Rank.valueOf(args[2].toUpperCase());
                     rankList.clear();
                     rankList.add(rank.name());
+                    rankList.add(Rank.MEMBER.name());
                     saveAndRefresh(target, rankList);
                     sender.sendMessage("§aSet §l" + target.getName() + "§r§a's rank to " + rank.getDisplay());
                 } catch (Exception e) { sender.sendMessage("§4That is not a valid rank."); }
