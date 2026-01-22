@@ -1,6 +1,8 @@
 package com.sami.advancedFFA.listeners;
 
 import com.sami.advancedFFA.Main;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -10,8 +12,11 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.UUID;
 
 public class CombatListener implements Listener {
@@ -22,6 +27,41 @@ public class CombatListener implements Listener {
 
     public CombatListener(Main plugin) {
         this.plugin = plugin;
+        startActionBarTask();
+    }
+
+    private void startActionBarTask() {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                long now = System.currentTimeMillis();
+                Iterator<Map.Entry<UUID, Long>> iterator = combatLog.entrySet().iterator();
+
+                while (iterator.hasNext()) {
+                    Map.Entry<UUID, Long> entry = iterator.next();
+                    Player player = Bukkit.getPlayer(entry.getKey());
+
+                    if (player == null || !player.isOnline()) {
+                        iterator.remove();
+                        continue;
+                    }
+
+                    long remainingMillis = entry.getValue() - now;
+
+                    if (remainingMillis <= 0) {
+                        // Timer finished
+                        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§a§lNo longer in combat"));
+                        player.sendMessage("§a§lCOMBAT §8» §7You are no longer in combat.");
+                        iterator.remove();
+                    } else {
+                        // Show seconds remaining
+                        int seconds = (int) Math.ceil(remainingMillis / 1000.0);
+                        player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
+                                new TextComponent("§c§lCombat Tag §8» §f" + seconds + "s remaining"));
+                    }
+                }
+            }
+        }.runTaskTimer(plugin, 0L, 20L); // Runs every 1 second (20 ticks)
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -40,12 +80,6 @@ public class CombatListener implements Listener {
         }
     }
 
-    @EventHandler
-    public void onHungerChange(FoodLevelChangeEvent e) {
-        e.setCancelled(true);
-        e.getEntity().setFoodLevel(20);
-    }
-
     private void tagPlayer(Player player) {
         if (!combatLog.containsKey(player.getUniqueId())) {
             player.sendMessage("§c§lCOMBAT §8» §7You are now in combat! Do not log out.");
@@ -54,16 +88,20 @@ public class CombatListener implements Listener {
     }
 
     @EventHandler
+    public void onHungerChange(FoodLevelChangeEvent e) {
+        e.setCancelled(true);
+        e.getEntity().setFoodLevel(20);
+    }
+
+    @EventHandler
     public void onCommand(PlayerCommandPreprocessEvent e) {
         Player p = e.getPlayer();
         if (isTagged(p) && !p.isOp()) {
-            if (e.getMessage().toLowerCase().startsWith("/kit")) {
+            String msg = e.getMessage().toLowerCase();
+            if (msg.startsWith("/kit") || msg.startsWith("/spawn")) {
                 e.setCancelled(true);
-                p.sendMessage("§cYou cannot use the kit editor while in combat!");
-                return;
+                p.sendMessage("§cYou cannot use that command while in combat!");
             }
-            e.setCancelled(true);
-            p.sendMessage("§cYou cannot use commands while in combat!");
         }
     }
 
@@ -71,24 +109,16 @@ public class CombatListener implements Listener {
     public void onQuit(PlayerQuitEvent e) {
         Player p = e.getPlayer();
         if (isTagged(p) && !p.isOp()) {
-            String reason = "§cLogged out during combat!";
-            Bukkit.getBanList(org.bukkit.BanList.Type.NAME).addBan(p.getName(), reason,
+            Bukkit.getBanList(org.bukkit.BanList.Type.NAME).addBan(p.getName(), "§cLogged out during combat!",
                     new java.util.Date(System.currentTimeMillis() + (30 * 60 * 1000L)), "Console");
-            p.kickPlayer(reason);
+            p.setHealth(0);
         }
         combatLog.remove(p.getUniqueId());
     }
 
     public boolean isTagged(Player p) {
-        UUID uuid = p.getUniqueId();
-        if (!combatLog.containsKey(uuid)) return false;
-
-        if (System.currentTimeMillis() > combatLog.get(uuid)) {
-            combatLog.remove(uuid);
-            p.sendMessage("§a§lCOMBAT §8» §7You are no longer in combat.");
-            return false;
-        }
-        return true;
+        Long time = combatLog.get(p.getUniqueId());
+        return time != null && System.currentTimeMillis() < time;
     }
 
     public void removeTag(UUID uuid) {
