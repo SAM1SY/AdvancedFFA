@@ -10,8 +10,10 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class PlayerDataManager {
 
@@ -31,6 +33,11 @@ public class PlayerDataManager {
             }
         }
         this.config = YamlConfiguration.loadConfiguration(file);
+    }
+
+    public void saveName(UUID uuid, String name) {
+        config.set("players." + uuid.toString() + ".name", name);
+        saveFile();
     }
 
     public void saveStats(UUID uuid, int kills, int deaths, int level) {
@@ -94,33 +101,28 @@ public class PlayerDataManager {
         }
     }
 
-    public Map<String, Integer> getTop10(String stat) {
-        Map<String, Integer> results = new HashMap<>();
+    public Map<String, Integer> getTop10(String statKey) {
+        Map<String, Integer> killsMap = new HashMap<>();
         ConfigurationSection playersSection = config.getConfigurationSection("players");
 
-        if (playersSection == null) return results;
+        if (playersSection == null) return new LinkedHashMap<>();
 
         for (String uuidStr : playersSection.getKeys(false)) {
-            String name = Bukkit.getOfflinePlayer(UUID.fromString(uuidStr)).getName();
-            if (name == null) name = "Unknown";
+            int value = config.getInt("players." + uuidStr + ".stats." + statKey, 0);
+            String name = config.getString("players." + uuidStr + ".name");
 
-            // Path logic based on your YAML structure
-            int value = 0;
-            if (stat.equalsIgnoreCase("best-streak")) {
-                value = config.getInt("players." + uuidStr + ".stats.best-streak", 0);
-            } else {
-                value = config.getInt("players." + uuidStr + ".stats." + stat.toLowerCase(), 0);
+            if (name != null) {
+                killsMap.put(name, value);
             }
-            results.put(name, value);
         }
 
-        return results.entrySet().stream()
+        return killsMap.entrySet().stream()
                 .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
                 .limit(10)
-                .collect(java.util.stream.Collectors.toMap(
+                .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         Map.Entry::getValue,
                         (e1, e2) -> e1,
-                        java.util.LinkedHashMap::new));
+                        LinkedHashMap::new));
     }
 }

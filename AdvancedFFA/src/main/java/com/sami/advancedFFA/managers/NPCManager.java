@@ -26,14 +26,13 @@ public class NPCManager {
     }
 
     public void createStandardArenaNPC() {
-        // Changed Y to 64.0 to ensure NPC isn't underground
-        Location loc = new Location(Bukkit.getWorld("spawn"), 48.5, 64.0, -1.5, 90, 0);
-
-        if (loc.getWorld() == null) {
+        World world = Bukkit.getWorld("spawn");
+        if (world == null) {
             plugin.getLogger().warning("World 'spawn' not found!");
             return;
         }
 
+        Location loc = new Location(world, 48.5, -2.0, -1.5, 90, 0);
         NPCRegistry registry = CitizensAPI.getNPCRegistry();
 
         Iterator<NPC> iter = registry.iterator();
@@ -45,8 +44,9 @@ public class NPCManager {
         }
 
         NPC npc = registry.createNPC(EntityType.PLAYER, NPC_NAME);
-        npc.getOrAddTrait(SkinTrait.class).setSkinName("sSkaito");
+        npc.data().setPersistent("gravity", false);
 
+        npc.getOrAddTrait(SkinTrait.class).setSkinName("sSkaito");
         Equipment equip = npc.getOrAddTrait(Equipment.class);
         equip.set(Equipment.EquipmentSlot.HAND, getEnchanted(Material.DIAMOND_SWORD));
         equip.set(Equipment.EquipmentSlot.HELMET, getEnchanted(Material.DIAMOND_HELMET));
@@ -64,21 +64,32 @@ public class NPCManager {
     private void startParticles(NPC npc) {
         new BukkitRunnable() {
             double angle = 0;
+            boolean rising = true;
+
             @Override
             public void run() {
                 if (npc == null || !npc.isSpawned() || npc.getEntity() == null) {
                     this.cancel();
                     return;
                 }
-                Location l = npc.getEntity().getLocation().add(0, 0.1, 0);
+
+                Location loc = npc.getEntity().getLocation();
 
                 double x = 0.8 * Math.cos(angle);
                 double z = 0.8 * Math.sin(angle);
-                l.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, l.clone().add(x, 0, z), 1, 0, 0, 0, 0);
+
+                double y = Math.sin(angle * 0.5) + 1.0;
+
+                // 3. Spawn the spiral particle
+                loc.add(x, y, z);
+                loc.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, loc, 1, 0, 0, 0, 0);
+
+                loc.subtract(x, y, z);
 
                 if (Math.random() < 0.15) {
-                    l.getWorld().spawnParticle(Particle.END_ROD, l.clone().add(0, 1, 0), 1, 0.2, 0.5, 0.2, 0.02);
+                    loc.getWorld().spawnParticle(Particle.END_ROD, loc.clone().add(0, 1, 0), 1, 0.2, 0.5, 0.2, 0.02);
                 }
+
                 angle += 0.2;
             }
         }.runTaskTimer(plugin, 0L, 1L);

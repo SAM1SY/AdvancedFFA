@@ -44,6 +44,7 @@ public final class Main extends JavaPlugin {
         registerCommands();
         registerListeners();
 
+        LeaderboardUpdating();
         startNpcTasks();
 
         getLogger().info("========================================");
@@ -98,6 +99,13 @@ public final class Main extends JavaPlugin {
                 this.npcManager.createStandardArenaNPC();
             }
         }, 100L);
+    }
+
+    private void LeaderboardUpdating() {
+        Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
+            this.statsManager.updateGlobalLeaderboards();
+            getLogger().info("Global leaderboards have been refreshed.");
+        }, 20L, 1200L);
     }
 
     @Override

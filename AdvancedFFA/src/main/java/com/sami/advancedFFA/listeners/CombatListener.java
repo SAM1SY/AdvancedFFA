@@ -49,12 +49,10 @@ public class CombatListener implements Listener {
                     long remainingMillis = entry.getValue() - now;
 
                     if (remainingMillis <= 0) {
-                        // Timer finished
                         player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§a§lNo longer in combat"));
                         player.sendMessage("§a§lCOMBAT §8» §7You are no longer in combat.");
                         iterator.remove();
                     } else {
-                        // Show seconds remaining
                         int seconds = (int) Math.ceil(remainingMillis / 1000.0);
                         player.spigot().sendMessage(ChatMessageType.ACTION_BAR,
                                 new TextComponent("§c§lCombat Tag §8» §f" + seconds + "s remaining"));

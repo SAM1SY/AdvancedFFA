@@ -10,7 +10,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
@@ -25,29 +24,32 @@ public class LeaderboardListener implements Listener {
 
     private final Main plugin;
     private final String LEADERBOARD_NAME = "§a§lLeaderBoard §7(Right Click)";
+    private final String GUI_TITLE = "§8Global Leaderboards";
 
-    public LeaderboardListener(Main plugin) { this.plugin = plugin; }
+    public LeaderboardListener(Main plugin) {
+        this.plugin = plugin;
+    }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onInteract(PlayerInteractEvent e) {
         if (e.getAction() == Action.RIGHT_CLICK_AIR || e.getAction() == Action.RIGHT_CLICK_BLOCK) {
             ItemStack item = e.getItem();
-            if (item != null && item.getType() == Material.EMERALD && item.hasItemMeta()) {
-                if (item.getItemMeta().getDisplayName().equals(LEADERBOARD_NAME)) {
-                    e.setCancelled(true);
-                    openLeaderboard(e.getPlayer());
-                }
+            if (isLeaderboardItem(item)) {
+                e.setCancelled(true);
+                openLeaderboard(e.getPlayer());
             }
         }
     }
 
     public void openLeaderboard(Player p) {
+        plugin.getStatsManager().updateGlobalLeaderboards();
+
         Inventory inv = Bukkit.createInventory(null, 27, "§8Global Leaderboards");
 
         inv.setItem(10, createStatItem(Material.DIAMOND_SWORD, "§a§lKills", "kills"));
-        inv.setItem(12, createStatItem(Material.SKELETON_SKULL, "§a§lDeaths", "deaths"));
-        inv.setItem(14, createStatItem(Material.NETHERITE_SWORD, "§a§lStreaks", "best-streak"));
-        inv.setItem(16, createStatItem(Material.EXPERIENCE_BOTTLE, "§a§lLevel", "level"));
+        inv.setItem(12, createStatItem(Material.SKELETON_SKULL, "§c§lDeaths", "deaths"));
+        inv.setItem(14, createStatItem(Material.NETHERITE_SWORD, "§e§lStreaks", "best-streak"));
+        inv.setItem(16, createStatItem(Material.EXPERIENCE_BOTTLE, "§b§lLevel", "level"));
 
         p.openInventory(inv);
     }
@@ -61,15 +63,19 @@ public class LeaderboardListener implements Listener {
         List<String> lore = new ArrayList<>();
         lore.add("§7§m-----------------------");
 
-        Map<String, Integer> topData = plugin.getPlayerDataManager().getTop10(statKey);
-        int rank = 1;
+        Map<String, Integer> topData = plugin.getStatsManager().getCachedTop10(statKey);
 
-        for (Map.Entry<String, Integer> entry : topData.entrySet()) {
-            lore.add("§e#" + rank + " §f" + entry.getKey() + " §7- §a" + entry.getValue());
-            rank++;
+        if (topData == null || topData.isEmpty()) {
+            lore.add("§cUpdating data...");
+            lore.add("§7Please check back in a minute.");
+        } else {
+            int rank = 1;
+            for (Map.Entry<String, Integer> entry : topData.entrySet()) {
+                String rankColor = (rank == 1) ? "§6§l" : (rank == 2) ? "§f§l" : (rank == 3) ? "§e§l" : "§7";
+                lore.add(rankColor + "#" + rank + " §f" + entry.getKey() + " §8» §a" + entry.getValue());
+                rank++;
+            }
         }
-
-        if (topData.isEmpty()) lore.add("§cNo data found yet.");
 
         lore.add("§7§m-----------------------");
         meta.setLore(lore);
@@ -79,7 +85,7 @@ public class LeaderboardListener implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent e) {
-        if (e.getView().getTitle().equals("§8Global Leaderboards")) {
+        if (e.getView().getTitle().equals(GUI_TITLE)) {
             e.setCancelled(true);
             return;
         }
@@ -88,9 +94,8 @@ public class LeaderboardListener implements Listener {
         ItemStack cursor = e.getCursor();
 
         if (isLeaderboardItem(current) || isLeaderboardItem(cursor)) {
-            e.setCancelled(true);
-            if (e.getClick() == ClickType.NUMBER_KEY || e.getClick().isShiftClick()) {
-                e.getWhoClicked().closeInventory();
+            if (e.getClick() == ClickType.NUMBER_KEY || e.getClick().isShiftClick() || e.getClick() == ClickType.DROP) {
+                e.setCancelled(true);
             }
         }
     }
@@ -99,12 +104,15 @@ public class LeaderboardListener implements Listener {
     public void onDrop(PlayerDropItemEvent e) {
         if (isLeaderboardItem(e.getItemDrop().getItemStack())) {
             e.setCancelled(true);
-            e.getPlayer().sendMessage("§cYou cannot drop the Leaderboard tool!");
+            e.getPlayer().sendMessage("§cYou cannot drop your leaderboard tool!");
         }
     }
 
     private boolean isLeaderboardItem(ItemStack item) {
-        return item != null && item.getType() == Material.EMERALD &&
-                item.hasItemMeta() && item.getItemMeta().getDisplayName().equals(LEADERBOARD_NAME);
+        return item != null &&
+                item.getType() == Material.EMERALD &&
+                item.hasItemMeta() &&
+                item.getItemMeta().hasDisplayName() &&
+                item.getItemMeta().getDisplayName().equals(LEADERBOARD_NAME);
     }
 }

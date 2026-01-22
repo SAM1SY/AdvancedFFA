@@ -24,33 +24,32 @@ public class JoinListener implements Listener {
         Player player = e.getPlayer();
         UUID uuid = player.getUniqueId();
 
-        teleportToSpawn(player);
+        plugin.getPlayerDataManager().saveName(player.getUniqueId(), player.getName());
 
+        teleportToSpawn(player);
         player.getInventory().clear();
         player.setFoodLevel(20);
         player.setHealth(20);
 
-        giveLobbyItems(player);
-
         plugin.getStatsManager().loadPlayer(player);
-
-        player.sendTitle("§6§lADVANCED FFA", "§7Welcome to the arena!", 10, 70, 20);
 
         String levelColor = plugin.getStatsManager().getLevelColor(uuid);
         int level = plugin.getStatsManager().getLevel(uuid);
+
         e.setJoinMessage("§8[§a+§8] " + levelColor + "[" + level + "] §7" + player.getName());
+
+        giveLobbyItems(player);
+        player.sendTitle("§6§lADVANCED FFA", "§7Welcome to the arena!", 10, 70, 20);
 
         String[] modes = {"Standard", "Speed", "Beast"};
         for (String mode : modes) {
             Map<Material, Integer> savedLayout = plugin.getPlayerDataManager().loadLayout(uuid, mode);
-
             if (savedLayout != null && !savedLayout.isEmpty()) {
                 plugin.getKitManager().setLayout(uuid, mode, savedLayout);
             } else {
                 plugin.getKitManager().setLayout(uuid, mode, plugin.getKitManager().getDefaultLayout());
             }
         }
-
     }
 
     private void teleportToSpawn(Player player) {

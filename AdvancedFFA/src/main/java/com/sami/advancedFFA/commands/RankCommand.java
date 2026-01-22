@@ -64,7 +64,6 @@ public class RankCommand implements CommandExecutor {
                 try {
                     Rank rank = Rank.valueOf(args[2].toUpperCase());
                     if (!rankList.contains(rank.name())) {
-                        rankList.remove(Rank.MEMBER.name());
                         rankList.add(rank.name());
                         saveAndRefresh(target, rankList);
                         sender.sendMessage("§aAdded " + rank.getDisplay() + " §ato §l" + target.getName());
@@ -79,8 +78,9 @@ public class RankCommand implements CommandExecutor {
                 try {
                     Rank rank = Rank.valueOf(args[2].toUpperCase());
                     rankList.clear();
-                    rankList.add(rank.name());
-                    rankList.add(Rank.MEMBER.name());
+                    rankList.add(Rank.MEMBER.name()); // Ensure Member is always first
+                    if (rank != Rank.MEMBER) rankList.add(rank.name());
+
                     saveAndRefresh(target, rankList);
                     sender.sendMessage("§aSet §l" + target.getName() + "§r§a's rank to " + rank.getDisplay());
                 } catch (Exception e) { sender.sendMessage("§4That is not a valid rank."); }
@@ -88,11 +88,16 @@ public class RankCommand implements CommandExecutor {
 
             case "rem":
                 if (args.length < 3) { sender.sendMessage("§4§lUsage: §r§7/rank rem <player> <rank>"); return true; }
-                if (args[2].toUpperCase().equals(Rank.MEMBER.name())) { sender.sendMessage("§4§lYou can't remove MEMBER rank."); return true; }
-                if (rankList.remove(args[2].toUpperCase())) {
-                    if (rankList.isEmpty()) rankList.add(Rank.MEMBER.name());
+                String rankToRemove = args[2].toUpperCase();
+
+                if (rankToRemove.equals(Rank.MEMBER.name())) {
+                    sender.sendMessage("§4§lYou can't remove the MEMBER rank.");
+                    return true;
+                }
+
+                if (rankList.remove(rankToRemove)) {
                     saveAndRefresh(target, rankList);
-                    sender.sendMessage("§eRemoved §l" + args[2].toUpperCase() + " §r§efrom §l" + target.getName());
+                    sender.sendMessage("§eRemoved §l" + rankToRemove + " §r§efrom §l" + target.getName());
                 } else {
                     sender.sendMessage("§cPlayer does not have that rank.");
                 }
@@ -102,7 +107,7 @@ public class RankCommand implements CommandExecutor {
                 rankList.clear();
                 rankList.add(Rank.MEMBER.name());
                 saveAndRefresh(target, rankList);
-                sender.sendMessage("§l" + target.getName() + "§r§e's rank reset.");
+                sender.sendMessage("§l" + target.getName() + "§r§e's ranks have been reset to Member.");
                 break;
 
             default:
@@ -112,17 +117,24 @@ public class RankCommand implements CommandExecutor {
     }
 
     private void saveAndRefresh(OfflinePlayer target, List<String> ranks) {
+        if (!ranks.contains(Rank.MEMBER.name())) {
+            ranks.add(Rank.MEMBER.name());
+        }
+
         dataManager.getConfig().set("players." + target.getUniqueId() + ".ranks", ranks);
         dataManager.saveConfig();
+
         Player online = target.getPlayer();
         if (online != null) {
             Rank highest = getHighestRank(ranks);
             online.setPlayerListName(ChatColor.translateAlternateColorCodes('&', highest.getDisplay() + " " + online.getName()));
 
-            // Re-apply permissions
             PermissionAttachment att = online.addAttachment(plugin);
             for (String r : ranks) {
-                for (String p : plugin.getPermsManager().getConfig().getStringList(r)) att.setPermission(p, true);
+                List<String> perms = plugin.getPermsManager().getConfig().getStringList(r.toUpperCase());
+                if (perms != null) {
+                    for (String p : perms) att.setPermission(p, true);
+                }
             }
         }
     }
@@ -131,7 +143,7 @@ public class RankCommand implements CommandExecutor {
         Rank highest = Rank.MEMBER;
         for (String rName : ranks) {
             try {
-                Rank r = Rank.valueOf(rName);
+                Rank r = Rank.valueOf(rName.toUpperCase());
                 if (r.ordinal() < highest.ordinal()) highest = r;
             } catch (Exception ignored) {}
         }
