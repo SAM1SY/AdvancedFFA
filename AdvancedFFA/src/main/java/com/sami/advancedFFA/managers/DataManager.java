@@ -20,25 +20,41 @@ public class DataManager {
     }
 
     public void reloadConfig() {
-        if (this.configFile == null) this.configFile = new File(this.plugin.getDataFolder(), fileName);
+        if (this.configFile == null) {
+            this.configFile = new File(this.plugin.getDataFolder(), fileName);
+        }
         this.dataConfig = YamlConfiguration.loadConfiguration(this.configFile);
     }
 
     public FileConfiguration getConfig() {
-        if (this.dataConfig == null) reloadConfig();
+        if (this.dataConfig == null) {
+            reloadConfig();
+        }
         return this.dataConfig;
     }
 
     public void saveConfig() {
         if (this.dataConfig == null || this.configFile == null) return;
-        try { this.getConfig().save(this.configFile); } catch (IOException e) { e.printStackTrace(); }
+        try {
+            this.getConfig().save(this.configFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void saveDefaultConfig() {
-        if (this.configFile == null) this.configFile = new File(this.plugin.getDataFolder(), fileName);
-        if (!this.plugin.getDataFolder().exists()) this.plugin.getDataFolder().mkdir();
+        if (this.configFile == null) {
+            this.configFile = new File(this.plugin.getDataFolder(), fileName);
+        }
+        if (!this.plugin.getDataFolder().exists()) {
+            this.plugin.getDataFolder().mkdir();
+        }
         if (!this.configFile.exists()) {
-            try { this.configFile.createNewFile(); } catch (IOException e) { e.printStackTrace(); }
+            try {
+                this.configFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

@@ -2,7 +2,6 @@ package com.sami.advancedFFA.commands;
 
 import com.sami.advancedFFA.Main;
 import com.sami.advancedFFA.Rank;
-import com.sami.advancedFFA.managers.DataManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -10,143 +9,114 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.permissions.PermissionAttachment;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class RankCommand implements CommandExecutor {
-
     private final Main plugin;
-    private final DataManager dataManager;
 
-    public RankCommand(Main plugin, DataManager dataManager) {
+    public RankCommand(Main plugin) {
         this.plugin = plugin;
-        this.dataManager = dataManager;
     }
 
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String s, @NotNull String[] args) {
-
+    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (!sender.hasPermission("advancedranks.use")) {
-            sender.sendMessage("§4§lYou don't have the permission to run this command.");
+            sender.sendMessage(ChatColor.RED + "You don't have permission to use this command.");
             return true;
         }
 
         if (args.length < 2) {
-            sender.sendMessage("§4§lUsage: §r§7/rank <set | add | rem | reset | get> <player> [rank]");
+            sender.sendMessage(ChatColor.RED + "Usage: /rank <set|add|rem|reset|get> <player> [rank]");
             return true;
         }
 
         String action = args[0].toLowerCase();
         OfflinePlayer target = Bukkit.getOfflinePlayer(args[1]);
-        String uuid = target.getUniqueId().toString();
+        UUID uuid = target.getUniqueId();
 
-        if (!dataManager.getConfig().contains("players." + uuid)) {
-            sender.sendMessage("§c" + target.getName() + " has never joined the server.");
-            return true;
-        }
-
-        List<String> rankList = dataManager.getConfig().getStringList("players." + uuid + ".ranks");
+        List<String> ranks = new ArrayList<>(plugin.getStatsManager().getRanks(uuid));
 
         switch (action) {
             case "get":
-                List<String> displays = new ArrayList<>();
-                for (String rName : rankList) {
-                    try { displays.add(Rank.valueOf(rName).getDisplay()); } catch (Exception ignored) {}
+                sender.sendMessage(ChatColor.GRAY + "--- " + ChatColor.YELLOW + target.getName() + "'s Ranks" + ChatColor.GRAY + " ---");
+                if (ranks.isEmpty()) {
+                    sender.sendMessage(ChatColor.RED + " No ranks found (Defaulting to MEMBER).");
+                } else {
+                    for (String rName : ranks) {
+                        sender.sendMessage(ChatColor.GRAY + " » " + ChatColor.WHITE + rName);
+                    }
                 }
-                sender.sendMessage("§l" + target.getName() + "§r§7's ranks: " + String.join("§r§7, ", displays));
+                return true;
+
+            case "set":
+                if (args.length < 3) return false;
+                try {
+                    Rank r = Rank.valueOf(args[2].toUpperCase());
+                    ranks.clear();
+                    ranks.add(Rank.MEMBER.name());
+                    if (r != Rank.MEMBER) ranks.add(r.name());
+                    plugin.getStatsManager().setRanks(uuid, ranks);
+                    sender.sendMessage(ChatColor.GREEN + "Rank for " + target.getName() + " set to " + r.name());
+                } catch (IllegalArgumentException e) {
+                    sender.sendMessage(ChatColor.RED + "Invalid Rank! Use: OWNER, DEV, MANAGER, MOD, HELPER, MVP, ELITE, VIP, MEMBER");
+                    return true;
+                }
                 break;
 
             case "add":
-                if (args.length < 3) { sender.sendMessage("§4§lUsage: §r§7/rank add <player> <rank>"); return true; }
+                if (args.length < 3) return false;
                 try {
-                    Rank rank = Rank.valueOf(args[2].toUpperCase());
-                    if (!rankList.contains(rank.name())) {
-                        rankList.add(rank.name());
-                        saveAndRefresh(target, rankList);
-                        sender.sendMessage("§aAdded " + rank.getDisplay() + " §ato §l" + target.getName());
+                    String newRank = args[2].toUpperCase();
+                    Rank.valueOf(newRank); // Validate if rank exists
+                    if (!ranks.contains(newRank)) {
+                        ranks.add(newRank);
+                        plugin.getStatsManager().setRanks(uuid, ranks);
+                        sender.sendMessage(ChatColor.GREEN + "Added " + newRank + " to " + target.getName());
                     } else {
-                        sender.sendMessage("§cPlayer already has this rank.");
+                        sender.sendMessage(ChatColor.RED + target.getName() + " already has that rank.");
+                        return true;
                     }
-                } catch (Exception e) { sender.sendMessage("§4That is not a valid rank."); }
-                break;
-
-            case "set":
-                if (args.length < 3) { sender.sendMessage("§4§lUsage: §r§7/rank set <player> <rank>"); return true; }
-                try {
-                    Rank rank = Rank.valueOf(args[2].toUpperCase());
-                    rankList.clear();
-                    rankList.add(Rank.MEMBER.name()); // Ensure Member is always first
-                    if (rank != Rank.MEMBER) rankList.add(rank.name());
-
-                    saveAndRefresh(target, rankList);
-                    sender.sendMessage("§aSet §l" + target.getName() + "§r§a's rank to " + rank.getDisplay());
-                } catch (Exception e) { sender.sendMessage("§4That is not a valid rank."); }
+                } catch (IllegalArgumentException e) {
+                    sender.sendMessage(ChatColor.RED + "Invalid Rank!");
+                    return true;
+                }
                 break;
 
             case "rem":
-                if (args.length < 3) { sender.sendMessage("§4§lUsage: §r§7/rank rem <player> <rank>"); return true; }
-                String rankToRemove = args[2].toUpperCase();
-
-                if (rankToRemove.equals(Rank.MEMBER.name())) {
-                    sender.sendMessage("§4§lYou can't remove the MEMBER rank.");
+                if (args.length < 3) return false;
+                String toRem = args[2].toUpperCase();
+                if (toRem.equals("MEMBER")) {
+                    sender.sendMessage(ChatColor.RED + "You cannot remove the MEMBER rank.");
                     return true;
                 }
-
-                if (rankList.remove(rankToRemove)) {
-                    saveAndRefresh(target, rankList);
-                    sender.sendMessage("§eRemoved §l" + rankToRemove + " §r§efrom §l" + target.getName());
+                if (ranks.remove(toRem)) {
+                    plugin.getStatsManager().setRanks(uuid, ranks);
+                    sender.sendMessage(ChatColor.YELLOW + "Removed " + toRem + " from " + target.getName());
                 } else {
-                    sender.sendMessage("§cPlayer does not have that rank.");
+                    sender.sendMessage(ChatColor.RED + "This player does not have that rank.");
+                    return true;
                 }
                 break;
 
             case "reset":
-                rankList.clear();
-                rankList.add(Rank.MEMBER.name());
-                saveAndRefresh(target, rankList);
-                sender.sendMessage("§l" + target.getName() + "§r§e's ranks have been reset to Member.");
+                ranks.clear();
+                ranks.add(Rank.MEMBER.name());
+                plugin.getStatsManager().setRanks(uuid, ranks);
+                sender.sendMessage(ChatColor.YELLOW + "Ranks reset for " + target.getName());
                 break;
 
             default:
-                sender.sendMessage("§l§4Invalid action! §r§4Use: set, add, rem, reset, get");
+                sender.sendMessage(ChatColor.RED + "Unknown action. Use: set, add, rem, reset, get");
+                return true;
+        }
+
+        plugin.getStatsManager().syncRanksToDatabase(uuid, target.getName());
+
+        if (target.isOnline()) {
+            Player online = target.getPlayer();
+            plugin.getNametagManager().updateNametag(online);
+            sender.sendMessage(ChatColor.GRAY + "(Live update applied to Tab/Nametag for " + online.getName() + ")");
         }
         return true;
-    }
-
-    private void saveAndRefresh(OfflinePlayer target, List<String> ranks) {
-        if (!ranks.contains(Rank.MEMBER.name())) {
-            ranks.add(Rank.MEMBER.name());
-        }
-
-        dataManager.getConfig().set("players." + target.getUniqueId() + ".ranks", ranks);
-        dataManager.saveConfig();
-
-        Player online = target.getPlayer();
-        if (online != null) {
-            Rank highest = getHighestRank(ranks);
-            online.setPlayerListName(ChatColor.translateAlternateColorCodes('&', highest.getDisplay() + " " + online.getName()));
-
-            PermissionAttachment att = online.addAttachment(plugin);
-            for (String r : ranks) {
-                List<String> perms = plugin.getPermsManager().getConfig().getStringList(r.toUpperCase());
-                if (perms != null) {
-                    for (String p : perms) att.setPermission(p, true);
-                }
-            }
-        }
-    }
-
-    private Rank getHighestRank(List<String> ranks) {
-        Rank highest = Rank.MEMBER;
-        for (String rName : ranks) {
-            try {
-                Rank r = Rank.valueOf(rName.toUpperCase());
-                if (r.ordinal() < highest.ordinal()) highest = r;
-            } catch (Exception ignored) {}
-        }
-        return highest;
     }
 }

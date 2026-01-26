@@ -33,7 +33,65 @@ public class NPCManager {
 
         Location loc = new Location(world, 48.5, -2.0, -1.5, 90, 0);
         setupModularNPC("§a§lStandard Arena", loc, "sSkaito", "HAPPY_VILLAGER", 0.45, 1);
+    }
 
+    public void createSpeedArenaNPC() {
+        World world = Bukkit.getWorld("spawn");
+        if (world == null) {
+            plugin.getLogger().warning("World 'spawn' not found!");
+            return;
+        }
+
+        Location loc = new Location(world, 48.5, -2.0, 2.5, 90, 0);
+        setupModularNPC("§a§lSpeed Arena", loc, "SAM1_SY", "FLAME", 0.45, 1);
+    }
+
+    public void createBeastArenaNPC() {
+        World world = Bukkit.getWorld("spawn");
+        if (world == null) {
+            plugin.getLogger().warning("World 'spawn' not found!");
+            return;
+        }
+
+        Location loc = new Location(world, 48.5, -2.0, 0.5, 90, 0);
+        setupModularNPC("§a§lBeast Arena", loc, "Technoblade", "BEAST", 0.45, 1);
+    }
+
+    public void createKitEditorNPC() {
+        World world = Bukkit.getWorld("spawn");
+        if (world == null) return;
+
+        Location loc = new Location(world, 34.5, -3.5, -4.5, 65, 0);
+        NPCRegistry registry = CitizensAPI.getNPCRegistry();
+        String npcName = "§6§lKit Editor";
+
+        Iterator<NPC> iter = registry.iterator();
+        while (iter.hasNext()) {
+            NPC existing = iter.next();
+            if (ChatColor.stripColor(existing.getName()).equalsIgnoreCase("Kit Editor")) {
+                existing.destroy();
+            }
+        }
+
+        NPC npc = registry.createNPC(EntityType.PLAYER, npcName);
+
+        npc.data().setPersistent("pushable", false);
+        npc.data().setPersistent("gravity", false);
+        npc.data().setPersistent("collidable", false);
+
+        npc.spawn(loc);
+
+        npc.getOrAddTrait(SkinTrait.class).setSkinName("meDany");
+
+        Equipment equip = npc.getOrAddTrait(Equipment.class);
+        for (Equipment.EquipmentSlot slot : Equipment.EquipmentSlot.values()) {
+            equip.set(slot, null);
+        }
+
+        GuardTrait guard = npc.getOrAddTrait(GuardTrait.class);
+        guard.particleName = "NONE";
+        guard.pushStrength = 1.0;
+        guard.radius = 1.0;
     }
 
     private void setupModularNPC(String name, Location loc, String skin, String particle, double push, double radius) {
@@ -53,13 +111,10 @@ public class NPCManager {
         npc.data().setPersistent("gravity", false);
         npc.data().setPersistent("collidable", false);
         npc.data().setPersistent("keep-chunk-loaded", true);
+
         npc.spawn(loc);
         npc.teleport(loc, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.PLUGIN);
         npc.getOrAddTrait(SkinTrait.class).setSkinName(skin);
-
-        LookClose lc = npc.getOrAddTrait(LookClose.class);
-        lc.lookClose(true);
-        lc.setRange(8);
 
         Equipment equip = npc.getOrAddTrait(Equipment.class);
         equip.set(Equipment.EquipmentSlot.HAND, getEnchanted(Material.DIAMOND_SWORD));

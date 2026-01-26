@@ -1,12 +1,14 @@
 package com.sami.advancedFFA.managers;
 
 import com.sami.advancedFFA.Main;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,12 +17,29 @@ import java.util.UUID;
 public class KitManager {
     private final Main plugin;
     private final Map<UUID, Map<String, Map<Material, Integer>>> customLayouts = new HashMap<>();
-    private final Map<UUID, Integer> currentStreaks = new HashMap<>();
 
-    public KitManager(Main plugin) { this.plugin = plugin; }
+    public KitManager(Main plugin) {
+        this.plugin = plugin;
+    }
 
     public void giveKit(Player p, String mode) {
         p.getInventory().clear();
+        p.clearActivePotionEffects();
+
+        if (mode.equalsIgnoreCase("Beast")) {
+            p.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, Integer.MAX_VALUE, 0, false, false));
+            p.playSound(p.getLocation(), Sound.ENTITY_WITHER_BREAK_BLOCK, 1f, 0.8f);
+            p.sendMessage("§c§lBEAST MODE §8» §7Strength I and Protection IV active!");
+
+        } else if (mode.equalsIgnoreCase("Speed")) {
+            p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, Integer.MAX_VALUE, 0, false, false));
+            p.playSound(p.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.6f, 2.0f);
+            p.sendMessage("§b§lSPEED MODE §8» §7Speed I and Protection III active!");
+
+        } else {
+            p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1f);
+            p.sendMessage("§a§lSTANDARD MODE §8» §7Standard kit active!");
+        }
 
         int prot = getProtForMode(mode);
         p.getInventory().setHelmet(createItem(Material.DIAMOND_HELMET, Enchantment.PROTECTION, prot));
@@ -38,6 +57,7 @@ public class KitManager {
                 p.getInventory().setItem(slot, getPreviewItem(mat, mode));
             }
         }
+
         p.updateInventory();
     }
 
@@ -45,7 +65,6 @@ public class KitManager {
         customLayouts.computeIfAbsent(uuid, k -> new HashMap<>()).put(mode, layout);
     }
 
-    // NEW: Method to clear custom layouts for the Reset Button
     public void removeLayout(UUID uuid, String mode) {
         if (customLayouts.containsKey(uuid)) {
             customLayouts.get(uuid).remove(mode);
@@ -54,23 +73,33 @@ public class KitManager {
 
     public Map<Material, Integer> getLayout(UUID uuid, String mode) {
         Map<String, Map<Material, Integer>> playerModes = customLayouts.get(uuid);
-        Map<Material, Integer> layout;
 
-        if (playerModes == null || !playerModes.containsKey(mode)) {
-            layout = new HashMap<>(getDefaultLayout());
-        } else {
-            layout = new HashMap<>(playerModes.get(mode));
+        if (playerModes != null && playerModes.containsKey(mode)) {
+            return playerModes.get(mode);
         }
 
-        layout.keySet().removeIf(m -> m == Material.BARRIER || m == Material.AIR);
-        return layout;
+        Map<Material, Integer> dbLayout = plugin.getDatabaseManager().loadKitLayout(uuid, mode);
+
+        if (!dbLayout.isEmpty()) {
+            setLayout(uuid, mode, dbLayout);
+            return dbLayout;
+        }
+
+        return getDefaultLayout();
     }
 
     public ItemStack getPreviewItem(Material mat, String mode) {
         if (mat == Material.WOODEN_SWORD) return createWoodSword();
 
-        Enchantment ench = mat.toString().contains("SWORD") ? Enchantment.SHARPNESS : Enchantment.PROTECTION;
-        int level = mat.toString().contains("SWORD") ? 1 : getProtForMode(mode);
+        boolean isSword = mat.toString().contains("SWORD");
+        Enchantment ench = isSword ? Enchantment.SHARPNESS : Enchantment.PROTECTION;
+
+        int level;
+        if (isSword) {
+            level = mode.equalsIgnoreCase("Beast") ? 2 : 1;
+        } else {
+            level = getProtForMode(mode);
+        }
 
         return createItem(mat, ench, level);
     }
@@ -85,7 +114,9 @@ public class KitManager {
         ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.addEnchant(ench, lvl, true);
+            if (ench != null) {
+                meta.addEnchant(ench, lvl, true);
+            }
             meta.setUnbreakable(true);
             item.setItemMeta(meta);
         }
@@ -108,18 +139,5 @@ public class KitManager {
         def.put(Material.DIAMOND_SWORD, 0);
         def.put(Material.WOODEN_SWORD, 1);
         return def;
-    }
-
-    public void addKill(Player p) {
-        UUID uuid = p.getUniqueId();
-        currentStreaks.put(uuid, currentStreaks.getOrDefault(uuid, 0) + 1);
-    }
-
-    public int getStreak(UUID uuid) {
-        return currentStreaks.getOrDefault(uuid, 0);
-    }
-
-    public void resetStreak(Player p) {
-        currentStreaks.put(p.getUniqueId(), 0);
     }
 }

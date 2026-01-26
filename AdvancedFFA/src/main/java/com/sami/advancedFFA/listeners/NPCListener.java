@@ -12,6 +12,7 @@ import org.bukkit.event.Listener;
 
 import java.util.Random;
 
+
 public class NPCListener implements Listener {
     private final Main plugin;
     private final Random random = new Random();
@@ -27,9 +28,15 @@ public class NPCListener implements Listener {
 
         if (npc.hasTrait(GuardTrait.class)) {
             String name = ChatColor.stripColor(npc.getName());
-
             if (name.equalsIgnoreCase("Standard Arena")) {
                 teleportToArena(player, "Standard");
+            } else if (name.equalsIgnoreCase("Speed Arena")) {
+                teleportToArena(player, "Speed");
+            } else if (name.equalsIgnoreCase("Beast Arena")) {
+                teleportToArena(player, "Beast");
+            } else if (name.equalsIgnoreCase("Kit Editor")) {
+                player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 1f, 1f);
+                plugin.getKitCommand().openModeSelector(player);
             }
         }
     }
@@ -60,5 +67,8 @@ public class NPCListener implements Listener {
         }
 
         p.sendTitle("§a§l" + mode.toUpperCase(), "§7Good luck!", 5, 20, 5);
+
     }
+
 }
+

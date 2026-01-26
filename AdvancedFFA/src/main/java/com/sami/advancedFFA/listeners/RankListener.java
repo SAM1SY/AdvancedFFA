@@ -1,9 +1,7 @@
 package com.sami.advancedFFA.listeners;
 
 import com.sami.advancedFFA.Main;
-import com.sami.advancedFFA.Rank;
-import com.sami.advancedFFA.managers.DataManager;
-import org.bukkit.ChatColor;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -19,57 +17,45 @@ import java.util.UUID;
 public class RankListener implements Listener {
 
     private final Main plugin;
-    private final DataManager dataManager;
     private final Map<UUID, PermissionAttachment> attachments = new HashMap<>();
 
-    public RankListener(Main plugin, DataManager dataManager) {
+    public RankListener(Main plugin) {
         this.plugin = plugin;
-        this.dataManager = dataManager;
     }
 
     @EventHandler
     public void onJoinEvent(PlayerJoinEvent e) {
         Player p = e.getPlayer();
         UUID uuid = p.getUniqueId();
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (!p.isOnline()) return;
 
-        dataManager.getConfig().set("players." + uuid + ".name", p.getName());
-        List<String> ranks = dataManager.getConfig().getStringList("players." + uuid + ".ranks");
+            plugin.getNametagManager().updateNametag(p);
 
-        if (ranks.isEmpty()) {
-            ranks.add(Rank.MEMBER.name());
-            dataManager.getConfig().set("players." + uuid + ".ranks", ranks);
-            dataManager.saveConfig();
-        }
+            PermissionAttachment att = p.addAttachment(plugin);
+            attachments.put(uuid, att);
 
-        Rank highest = Rank.MEMBER;
-        for (String rName : ranks) {
-            try {
-                Rank r = Rank.valueOf(rName.toUpperCase());
-                if (r.ordinal() < highest.ordinal()) highest = r;
-            } catch (IllegalArgumentException ignored) {}
-        }
-
-        String tabFormat = highest.getDisplay() + " " + p.getName();
-        p.setPlayerListName(ChatColor.translateAlternateColorCodes('&', tabFormat));
-
-        PermissionAttachment att = p.addAttachment(plugin);
-        attachments.put(uuid, att);
-
-        for (String rName : ranks) {
-            List<String> perms = plugin.getPermsManager().getConfig().getStringList(rName.toUpperCase());
-            if (perms != null) {
-                for (String perm : perms) {
-                    att.setPermission(perm, true);
+            List<String> ranks = plugin.getStatsManager().getRanks(uuid);
+            for (String rName : ranks) {
+                List<String> perms = plugin.getPermsManager().getConfig().getStringList(rName.toUpperCase());
+                if (perms != null) {
+                    for (String perm : perms) {
+                        att.setPermission(perm, true);
+                    }
                 }
             }
-        }
+        }, 1L);
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
-        PermissionAttachment att = attachments.remove(e.getPlayer().getUniqueId());
+        UUID uuid = e.getPlayer().getUniqueId();
+
+        PermissionAttachment att = attachments.remove(uuid);
         if (att != null) {
             e.getPlayer().removeAttachment(att);
         }
+
+        plugin.getNametagManager().removeNametag(e.getPlayer());
     }
 }

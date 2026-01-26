@@ -16,13 +16,13 @@ arenas:
     y-level: 0.0
     spawn-radius: 15
   speed:
-    center-x: 500.5
-    center-z: 0.5
+    center-x: 0.5
+    center-z: 381.5
     y-level: 0.0
     spawn-radius: 15
   beast:
-    center-x: -500.5
-    center-z: 0.5
+    center-x: 0.5
+    center-z: -380.5
     y-level: 0.0
     spawn-radius: 15
 

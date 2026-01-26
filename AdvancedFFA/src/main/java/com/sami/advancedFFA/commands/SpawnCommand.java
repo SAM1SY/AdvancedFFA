@@ -8,7 +8,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.block.data.type.NoteBlock;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -81,16 +80,23 @@ public class SpawnCommand implements CommandExecutor {
         Location spawn = new Location(Bukkit.getWorld("spawn"), 0.5, 0, 0.5, -90, 0);
         p.teleport(spawn);
         p.getInventory().clear();
-
+        p.clearActivePotionEffects();
         ItemStack emerald = new ItemStack(Material.EMERALD);
-        ItemMeta meta = emerald.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName("§a§lLeaderBoard §7(Right Click)");
-            emerald.setItemMeta(meta);
+        ItemMeta emeraldItemMeta = emerald.getItemMeta();
+        ItemStack star = new ItemStack(Material.NETHER_STAR);
+        ItemMeta starItemMeta = star.getItemMeta();
+
+        if (emeraldItemMeta != null) {
+            emeraldItemMeta.setDisplayName("§a§lLeaderBoard §7(Right Click)");
+            emerald.setItemMeta(emeraldItemMeta);
         }
+        if (starItemMeta != null) {
+            starItemMeta.setDisplayName("§b§lSettings §7(Right Click)");
+            star.setItemMeta(starItemMeta);
+        }
+
         p.getInventory().setItem(4, emerald);
-        p.setHealth(20);
-        p.setFoodLevel(20);
+        p.getInventory().setItem(8, star);
 
         p.sendMessage("§a§lSERVER §8» §7Teleported to spawn.");
         p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§a§lTELEPORTED!"));

@@ -8,6 +8,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
@@ -40,7 +41,6 @@ public class InventoryListener implements Listener {
             KitCommand cmd = (KitCommand) plugin.getCommand("kit").getExecutor();
             String name = clicked.getItemMeta().getDisplayName();
 
-            // Unified capitalization: "Standard", "Speed", "Beast"
             if (name.contains("Standard")) cmd.openEditor(p, "Standard");
             else if (name.contains("Speed")) cmd.openEditor(p, "Speed");
             else if (name.contains("Beast")) cmd.openEditor(p, "Beast");
@@ -51,12 +51,10 @@ public class InventoryListener implements Listener {
             int slot = e.getRawSlot();
             String mode = title.replace("§8Editing: ", "");
 
-            if (e.getClick() == ClickType.SHIFT_LEFT || e.getClick() == ClickType.SHIFT_RIGHT) {
-                e.setCancelled(true);
-                return;
-            }
+            if (slot == -999) { e.setCancelled(true); return; }
 
-            // Allow moving items in the hotbar (0-8) and offhand (40)
+            if (e.getClick() == ClickType.SHIFT_LEFT || e.getClick() == ClickType.SHIFT_RIGHT) { e.setCancelled(true); return; }
+
             if ((slot >= 0 && slot <= 8) || slot == 40) return;
 
             e.setCancelled(true);
@@ -66,10 +64,24 @@ public class InventoryListener implements Listener {
                 p.closeInventory();
             } else if (slot == 52) { // RESET
                 plugin.getKitManager().removeLayout(p.getUniqueId(), mode);
+                plugin.getDatabaseManager().saveKitLayout(p.getUniqueId(), mode, plugin.getKitManager().getDefaultLayout());
                 ((KitCommand) plugin.getCommand("kit").getExecutor()).openEditor(p, mode);
                 p.sendMessage("§a§lKIT §8» §7Layout reset to default!");
             } else if (slot == 51) { // CANCEL
                 p.closeInventory();
+            }
+        }
+    }
+
+    @EventHandler
+    public void onPlayerDropItem(PlayerDropItemEvent e) {
+        Player p = e.getPlayer();
+        String title = p.getOpenInventory().getTitle();
+
+        if (title.startsWith("§8Editing: ")) {
+            int slot = p.getInventory().getHeldItemSlot();
+            if (slot >= 0 && slot <= 8) {
+                e.setCancelled(true);
             }
         }
     }
@@ -90,10 +102,10 @@ public class InventoryListener implements Listener {
 
         if (newLayout.containsKey(Material.DIAMOND_SWORD)) {
             plugin.getKitManager().setLayout(p.getUniqueId(), mode, newLayout);
-            plugin.getPlayerDataManager().saveLayout(p.getUniqueId(), mode, newLayout);
+            plugin.getDatabaseManager().saveKitLayout(p.getUniqueId(), mode, newLayout);
             p.sendMessage("§a§lKIT §8» §7Layout saved for " + mode + "!");
         } else {
-            p.sendMessage("§c§lKIT §8» §7Diamond Sword required!");
+            p.sendMessage("§c§lKIT §8» §7Diamond Sword required in hotbar to save!");
         }
     }
 }

@@ -5,10 +5,12 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -23,6 +25,7 @@ public class CombatListener implements Listener {
 
     private final Main plugin;
     private final HashMap<UUID, Long> combatLog = new HashMap<>();
+    private final HashMap<UUID, UUID> lastAttacker = new HashMap<>();
     private final int COMBAT_TIME = 20;
 
     public CombatListener(Main plugin) {
@@ -59,7 +62,14 @@ public class CombatListener implements Listener {
                     }
                 }
             }
-        }.runTaskTimer(plugin, 0L, 20L); // Runs every 1 second (20 ticks)
+        }.runTaskTimer(plugin, 0L, 20L);
+    }
+
+    @EventHandler
+    public void onFallDamage(EntityDamageEvent e) {
+        if (e.getCause() == EntityDamageEvent.DamageCause.FALL) {
+            e.setCancelled(true);
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -68,13 +78,21 @@ public class CombatListener implements Listener {
             Player victim = (Player) e.getEntity();
             Player attacker = (Player) e.getDamager();
 
-            if (victim.isInvulnerable() || attacker.isInvulnerable()) {
-                e.setCancelled(true);
-                return;
+            if (victim.isInvulnerable() || attacker.isInvulnerable()) { e.setCancelled(true); return; }
+
+            if (victim.getAllowFlight()) {
+                victim.setAllowFlight(false);
+                victim.setFlying(false);
+            }
+            if (attacker.getAllowFlight()) {
+                attacker.setAllowFlight(false);
+                attacker.setFlying(false);
             }
 
             tagPlayer(victim);
             tagPlayer(attacker);
+
+            lastAttacker.put(victim.getUniqueId(), attacker.getUniqueId());
         }
     }
 
@@ -106,17 +124,41 @@ public class CombatListener implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
         Player p = e.getPlayer();
+        UUID victimId = p.getUniqueId();
+
         if (isTagged(p) && !p.isOp()) {
+            UUID attackerId = lastAttacker.get(victimId);
+
+            if (attackerId != null) {
+                Player attacker = Bukkit.getPlayer(attackerId);
+                if (attacker != null && attacker.isOnline()) {
+                    plugin.getStatsManager().addKill(attacker);
+                    attacker.sendMessage("§a§lCOMBAT §8» §f" + p.getName() + " §7logged out! You received the kill.");
+                }
+            }
+
             Bukkit.getBanList(org.bukkit.BanList.Type.NAME).addBan(p.getName(), "§cLogged out during combat!",
                     new java.util.Date(System.currentTimeMillis() + (30 * 60 * 1000L)), "Console");
+
             p.setHealth(0);
         }
-        combatLog.remove(p.getUniqueId());
+
+        combatLog.remove(victimId);
+        lastAttacker.remove(victimId);
     }
 
     public boolean isTagged(Player p) {
         Long time = combatLog.get(p.getUniqueId());
         return time != null && System.currentTimeMillis() < time;
+    }
+
+    @EventHandler
+    public void onDeath(org.bukkit.event.entity.PlayerDeathEvent e) {
+        Player p = e.getEntity();
+        if (combatLog.containsKey(p.getUniqueId())) {
+            removeTag(p.getUniqueId());
+            p.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent("§a§lCombat ended by death"));
+        }
     }
 
     public void removeTag(UUID uuid) {

@@ -44,11 +44,11 @@ public class LeaderboardListener implements Listener {
     public void openLeaderboard(Player p) {
         plugin.getStatsManager().updateGlobalLeaderboards();
 
-        Inventory inv = Bukkit.createInventory(null, 27, "§8Global Leaderboards");
+        Inventory inv = Bukkit.createInventory(null, 27, GUI_TITLE);
 
         inv.setItem(10, createStatItem(Material.DIAMOND_SWORD, "§a§lKills", "kills"));
         inv.setItem(12, createStatItem(Material.SKELETON_SKULL, "§c§lDeaths", "deaths"));
-        inv.setItem(14, createStatItem(Material.NETHERITE_SWORD, "§e§lStreaks", "best-streak"));
+        inv.setItem(14, createStatItem(Material.NETHERITE_SWORD, "§e§lStreaks", "best_streak"));
         inv.setItem(16, createStatItem(Material.EXPERIENCE_BOTTLE, "§b§lLevel", "level"));
 
         p.openInventory(inv);
@@ -74,6 +74,7 @@ public class LeaderboardListener implements Listener {
                 String rankColor = (rank == 1) ? "§6§l" : (rank == 2) ? "§f§l" : (rank == 3) ? "§e§l" : "§7";
                 lore.add(rankColor + "#" + rank + " §f" + entry.getKey() + " §8» §a" + entry.getValue());
                 rank++;
+                if (rank > 10) break;
             }
         }
 
@@ -91,10 +92,8 @@ public class LeaderboardListener implements Listener {
         }
 
         ItemStack current = e.getCurrentItem();
-        ItemStack cursor = e.getCursor();
-
-        if (isLeaderboardItem(current) || isLeaderboardItem(cursor)) {
-            if (e.getClick() == ClickType.NUMBER_KEY || e.getClick().isShiftClick() || e.getClick() == ClickType.DROP) {
+        if (isLeaderboardItem(current)) {
+            if (e.getClick() == ClickType.NUMBER_KEY || e.isShiftClick() || e.getClick() == ClickType.DROP) {
                 e.setCancelled(true);
             }
         }
@@ -104,7 +103,6 @@ public class LeaderboardListener implements Listener {
     public void onDrop(PlayerDropItemEvent e) {
         if (isLeaderboardItem(e.getItemDrop().getItemStack())) {
             e.setCancelled(true);
-            e.getPlayer().sendMessage("§cYou cannot drop your leaderboard tool!");
         }
     }
 
