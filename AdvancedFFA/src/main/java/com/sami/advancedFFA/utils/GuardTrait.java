@@ -1,4 +1,4 @@
-package com.sami.advancedFFA.traits;
+package com.sami.advancedFFA.utils;
 
 import net.citizensnpcs.api.persistence.Persist;
 import net.citizensnpcs.api.trait.Trait;

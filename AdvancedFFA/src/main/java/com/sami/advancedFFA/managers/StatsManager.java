@@ -174,10 +174,14 @@ public class StatsManager {
     }
 
     public void updateGlobalLeaderboards() {
-        leaderboardCache.put("kills", plugin.getDatabaseManager().getTop10("kills"));
-        leaderboardCache.put("level", plugin.getDatabaseManager().getTop10("level"));
-        leaderboardCache.put("best_streak", plugin.getDatabaseManager().getTop10("best_streak"));
-        leaderboardCache.put("deaths", plugin.getDatabaseManager().getTop10("deaths"));
+        if (plugin.getDatabaseManager() == null) return;
+
+        String[] categories = {"kills", "level", "best_streak", "deaths"};
+
+        for (String cat : categories) {
+            Map<String, Integer> data = plugin.getDatabaseManager().getTop10(cat);
+            leaderboardCache.put(cat, data);
+        }
     }
 
     public Map<String, Integer> getCachedTop10(String key) {

@@ -1,7 +1,7 @@
 package com.sami.advancedFFA.listeners;
 
 import com.sami.advancedFFA.Main;
-import com.sami.advancedFFA.traits.GuardTrait;
+import com.sami.advancedFFA.utils.GuardTrait;
 import net.citizensnpcs.api.event.NPCRightClickEvent;
 import net.citizensnpcs.api.npc.NPC;
 import org.bukkit.*;

@@ -42,14 +42,18 @@ public class LeaderboardListener implements Listener {
     }
 
     public void openLeaderboard(Player p) {
-        plugin.getStatsManager().updateGlobalLeaderboards();
-
         Inventory inv = Bukkit.createInventory(null, 27, GUI_TITLE);
 
-        inv.setItem(10, createStatItem(Material.DIAMOND_SWORD, "§a§lKills", "kills"));
-        inv.setItem(12, createStatItem(Material.SKELETON_SKULL, "§c§lDeaths", "deaths"));
-        inv.setItem(14, createStatItem(Material.NETHERITE_SWORD, "§e§lStreaks", "best_streak"));
-        inv.setItem(16, createStatItem(Material.EXPERIENCE_BOTTLE, "§b§lLevel", "level"));
+        ItemStack glass = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
+        ItemMeta gMeta = glass.getItemMeta();
+        gMeta.setDisplayName(" ");
+        glass.setItemMeta(gMeta);
+        for (int i = 0; i < 27; i++) inv.setItem(i, glass);
+
+        inv.setItem(10, createStatItem(Material.DIAMOND_SWORD, "§a§lKills Top 10", "kills"));
+        inv.setItem(12, createStatItem(Material.SKELETON_SKULL, "§c§lDeaths Top 10", "deaths"));
+        inv.setItem(14, createStatItem(Material.NETHERITE_SWORD, "§e§lBest Streaks", "best_streak"));
+        inv.setItem(16, createStatItem(Material.EXPERIENCE_BOTTLE, "§b§lHighest Levels", "level"));
 
         p.openInventory(inv);
     }
@@ -57,7 +61,6 @@ public class LeaderboardListener implements Listener {
     private ItemStack createStatItem(Material mat, String name, String statKey) {
         ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
-        if (meta == null) return item;
 
         meta.setDisplayName(name);
         List<String> lore = new ArrayList<>();
@@ -65,12 +68,15 @@ public class LeaderboardListener implements Listener {
 
         Map<String, Integer> topData = plugin.getStatsManager().getCachedTop10(statKey);
 
-        if (topData == null || topData.isEmpty()) {
-            lore.add("§cUpdating data...");
-            lore.add("§7Please check back in a minute.");
+        if (topData.isEmpty()) {
+            Bukkit.getLogger().warning("GUI Debug: No data found in cache for key: " + statKey);
+            lore.add("§cNo data found yet.");
         } else {
+            List<Map.Entry<String, Integer>> list = new ArrayList<>(topData.entrySet());
+            list.sort((a, b) -> b.getValue().compareTo(a.getValue()));
+
             int rank = 1;
-            for (Map.Entry<String, Integer> entry : topData.entrySet()) {
+            for (Map.Entry<String, Integer> entry : list) {
                 String rankColor = (rank == 1) ? "§6§l" : (rank == 2) ? "§f§l" : (rank == 3) ? "§e§l" : "§7";
                 lore.add(rankColor + "#" + rank + " §f" + entry.getKey() + " §8» §a" + entry.getValue());
                 rank++;

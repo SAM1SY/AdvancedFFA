@@ -3,8 +3,11 @@ package com.sami.advancedFFA;
 import com.sami.advancedFFA.commands.*;
 import com.sami.advancedFFA.listeners.*;
 import com.sami.advancedFFA.managers.*;
+import com.sami.advancedFFA.menus.GuildShop;
 import com.sami.advancedFFA.menus.SettingsMenu;
-import com.sami.advancedFFA.traits.GuardTrait;
+import com.sami.advancedFFA.models.Guild;
+import com.sami.advancedFFA.utils.ColorTag;
+import com.sami.advancedFFA.utils.GuardTrait;
 import net.citizensnpcs.api.CitizensAPI;
 import net.citizensnpcs.api.trait.TraitInfo;
 import org.bukkit.Bukkit;
@@ -12,6 +15,7 @@ import org.bukkit.WorldCreator;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.awt.*;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -28,8 +32,12 @@ public final class Main extends JavaPlugin {
     private NametagManager nametagManager;
     private SettingsMenu settingsMenu;
     private KitCommand kitCommand;
+    private GuildManager guildManager;
+    private GuildShop guildShop;
+    private ColorTag colorTag;
 
     private final HashMap<UUID, UUID> lastMessaged = new HashMap<>();
+    private int animationFrame = 0;
 
     @Override
     public void onEnable() {
@@ -72,14 +80,17 @@ public final class Main extends JavaPlugin {
         this.nametagManager = new NametagManager(this);
         this.settingsMenu = new SettingsMenu(this);
         this.kitCommand = new KitCommand(this);
+        this.guildManager = new GuildManager(this);
+        this.guildShop = new GuildShop(this);
 
         registerCommands();
         registerListeners();
 
-
+        this.guildManager.loadGuilds();
         startAutoSaveTask();
         startLeaderboardTask();
         startNpcTasks();
+        tagAnimationTask();
 
         getLogger().info("========================================");
         getLogger().info("   AdvancedFFA SQLite System            ");
@@ -135,6 +146,10 @@ public final class Main extends JavaPlugin {
         if (getCommand("spawn") != null) {
             getCommand("spawn").setExecutor(new SpawnCommand(this));
         }
+        if (getCommand("guild") != null) {
+            getCommand("guild").setExecutor(new GuildCommand(this));
+            getCommand("guild").setTabCompleter(new GuildTabCompleter(this)); // Register here
+        }
     }
 
     private void registerListeners() {
@@ -144,10 +159,12 @@ public final class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(this.combatListener, this);
         getServer().getPluginManager().registerEvents(new DeathListener(this), this);
         getServer().getPluginManager().registerEvents(new NPCListener(this), this);
-        getServer().getPluginManager().registerEvents(new InventoryListener(this), this);
+        getServer().getPluginManager().registerEvents(new KitInventoryListener(this), this);
         getServer().getPluginManager().registerEvents(new LeaderboardListener(this), this);
         getServer().getPluginManager().registerEvents(new SpawnProtectionListener(this), this);
         getServer().getPluginManager().registerEvents(new SettingsListener(this), this);
+        getServer().getPluginManager().registerEvents(new GuildChatListener(this), this);
+        getServer().getPluginManager().registerEvents(new GuildShopListener(this), this);
     }
 
     private void startNpcTasks() {
@@ -161,19 +178,46 @@ public final class Main extends JavaPlugin {
         }, 100L);
     }
 
+    private void tagAnimationTask() {
+        Bukkit.getScheduler().runTaskTimer(this, () -> {
+            this.animationFrame++;
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                getNametagManager().updateNametag(p);
+            }
+        }, 0L, 3L);
+    }
+
     private void startLeaderboardTask() {
         Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
-            if (this.statsManager != null) {
-                this.statsManager.updateGlobalLeaderboards();
-            } else {
-                getLogger().warning("Failed to sync global leaderboards  with Database.");
+            getLogger().info("Updating leaderboards...");
+            getStatsManager().updateGlobalLeaderboards();
+        }, 20L, 6000L);
+    }
+
+    public void saveAllGuilds() {
+        if (guildManager == null || databaseManager == null) return;
+
+        int guildCount = guildManager.getGuilds().size();
+        if (guildCount == 0) return;
+
+        getLogger().info("[Auto-Save] Synchronizing " + guildCount + " guilds to the database...");
+
+        try {
+            for (Guild guild : guildManager.getGuilds().values()) {
+                databaseManager.saveGuild(guild);
             }
-        }, 20L, 1200L);
+            getLogger().info("[Auto-Save] Successfully saved all guild data.");
+        } catch (Exception e) {
+            getLogger().severe("[Auto-Save] Critical error while saving guilds: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void onDisable() {
         Bukkit.getScheduler().cancelTasks(this);
+
+        saveAllGuilds();
 
         if (statsManager != null) {
             getLogger().info("Saving stats for " + Bukkit.getOnlinePlayers().size() + " players...");
@@ -211,4 +255,7 @@ public final class Main extends JavaPlugin {
     public NametagManager getNametagManager() { return nametagManager; }
     public SettingsMenu getSettingsMenu() { return settingsMenu; }
     public KitCommand getKitCommand() { return kitCommand; }
+    public GuildManager getGuildManager() { return guildManager; }
+    public GuildShop getGuildShop() { return guildShop; }
+    public int getAnimationFrame() { return animationFrame; }
 }

@@ -1,12 +1,11 @@
 package com.sami.advancedFFA.managers;
 
 import com.sami.advancedFFA.Main;
-import com.sami.advancedFFA.traits.GuardTrait;
+import com.sami.advancedFFA.utils.GuardTrait;
 import net.citizensnpcs.api.CitizensAPI;
 import net.citizensnpcs.api.npc.NPC;
 import net.citizensnpcs.api.npc.NPCRegistry;
 import net.citizensnpcs.api.trait.trait.Equipment;
-import net.citizensnpcs.trait.LookClose;
 import net.citizensnpcs.trait.SkinTrait;
 import org.bukkit.*;
 import org.bukkit.enchantments.Enchantment;

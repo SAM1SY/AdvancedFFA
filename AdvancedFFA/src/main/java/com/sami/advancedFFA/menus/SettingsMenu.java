@@ -33,7 +33,11 @@ public class SettingsMenu {
     public void openChatSettings(Player p) {
         Inventory inv = Bukkit.createInventory(null, 27, "§8Chat Settings");
 
-        inv.setItem(10, createToggleItem(p, "xp_bar", Material.EXPERIENCE_BOTTLE, "§eXP ActionBar Display"));
+        boolean isInGuildChat = plugin.getGuildManager().isInGuildChat(p);
+        String guildStatus = isInGuildChat ? "§bGUILD" : "§aGLOBAL";
+        inv.setItem(10, createItem(Material.EXPERIENCE_BOTTLE, "§eChat Mode",
+                "§7Current Mode: " + guildStatus, "", "§eClick to toggle!"));
+
         inv.setItem(11, createToggleItem(p, "mention_sound", Material.BELL, "§eMention Sounds"));
         inv.setItem(12, createToggleItem(p, "pm_sound", Material.BELL, "§ePrivate Message Sounds"));
         inv.setItem(14, createToggleItem(p, "global_chat", Material.OAK_SIGN, "§eSee Global Chat"));

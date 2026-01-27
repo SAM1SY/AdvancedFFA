@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class InventoryListener implements Listener {
+public class KitInventoryListener implements Listener {
 
     private final Main plugin;
     private final List<Material> ALLOWED = Arrays.asList(
@@ -25,7 +25,7 @@ public class InventoryListener implements Listener {
             Material.GOLDEN_APPLE, Material.SHIELD
     );
 
-    public InventoryListener(Main plugin) { this.plugin = plugin; }
+    public KitInventoryListener(Main plugin) { this.plugin = plugin; }
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent e) {

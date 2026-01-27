@@ -1,6 +1,9 @@
 package com.sami.advancedFFA.listeners;
 
 import com.sami.advancedFFA.Main;
+import com.sami.advancedFFA.Rank;
+import com.sami.advancedFFA.models.Guild;
+import com.sami.advancedFFA.utils.ColorTag;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -14,6 +17,9 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.List;
+import java.util.UUID;
+
 public class SettingsListener implements Listener {
 
     private final Main plugin;
@@ -26,6 +32,25 @@ public class SettingsListener implements Listener {
     public void onChat(AsyncPlayerChatEvent e) {
         Player p = e.getPlayer();
 
+        // 1. Guild Chat Check
+        if (plugin.getGuildManager().isInGuildChat(p)) {
+            Guild g = plugin.getGuildManager().getGuild(p.getUniqueId());
+            if (g != null) {
+                e.setCancelled(true);
+                String message = e.getMessage();
+                String format = "§8§l[§b§lGuild Chat§8§l] §f" + p.getName() + "§8: §7" + message;
+
+                for (UUID uuid : g.getMembers()) {
+                    Player member = Bukkit.getPlayer(uuid);
+                    if (member != null && member.isOnline()) {
+                        member.sendMessage(format);
+                    }
+                }
+                return;
+            }
+        }
+
+        // 2. Global Chat Checks
         if (plugin.getSettingsMenu().getSetting(p, "global_chat", 1) == 0) {
             p.sendMessage("§c§lERROR §8» §7You have global chat disabled!");
             e.setCancelled(true);
@@ -35,14 +60,43 @@ public class SettingsListener implements Listener {
         e.getRecipients().removeIf(recipient ->
                 plugin.getSettingsMenu().getSetting(recipient, "global_chat", 1) == 0);
 
+        // 3. Format Global Chat Components
         String levelColor = plugin.getStatsManager().getLevelColor(p.getUniqueId());
         int level = plugin.getStatsManager().getLevel(p.getUniqueId());
-        String rankPrefix = plugin.getStatsManager().getHighestRank(p.getUniqueId()).getPrefix();
+
+        // --- Rank Logic: Hide if MEMBER ---
+        Rank rank = plugin.getStatsManager().getHighestRank(p.getUniqueId());
+        String rankPrefix = "";
+        if (rank != Rank.MEMBER) {
+            rankPrefix = rank.getPrefix() + " ";
+        }
+
         int streak = plugin.getStatsManager().getStreak(p.getUniqueId());
         String streakDisplay = (streak > 0) ? " §6" + streak : "";
 
-        e.setFormat(levelColor + "[" + level + "] " + rankPrefix + "§f" + p.getName() + streakDisplay + "§8: §f%2$s");
+        // 4. Guild Tag Logic (Animated Snapshot)
+        Guild g = plugin.getGuildManager().getGuild(p.getUniqueId());
+        String guildDisplay = "";
 
+        if (g != null) {
+            String colorData = g.getTagColor();
+            String rawTag = g.getTag();
+
+            if (colorData.contains(":")) {
+                // Split the hex codes and apply animation frame from Main
+                String[] hex = colorData.split(":");
+                guildDisplay = "§8§l[" + ColorTag.getAnimatedTag(rawTag, hex[0], hex[1], plugin.getAnimationFrame()) + "§8§l] ";
+            } else {
+                // Fallback for non-gradient tags
+                guildDisplay = "§8§l[" + colorData + "§l" + rawTag + "§8§l] ";
+            }
+        }
+
+        // 5. Final Format: [%tag%] [%level%] %rank% %player% %streak%: %msg%
+        // Note: If rank is Member, rankPrefix is empty, avoiding double spaces.
+        e.setFormat(guildDisplay + levelColor + "[" + level + "] §f" + rankPrefix + p.getName() + streakDisplay + "§8: §f%2$s");
+
+        // 6. Mention Sounds
         String message = e.getMessage().toLowerCase();
         for (Player online : e.getRecipients()) {
             if (message.contains(online.getName().toLowerCase()) && !online.equals(p)) {
@@ -117,7 +171,20 @@ public class SettingsListener implements Listener {
             }
 
             String key = null;
-            if (clicked.getType() == Material.EXPERIENCE_BOTTLE) key = "xp_bar";
+
+            if (clicked.getType() == Material.EXPERIENCE_BOTTLE) {
+                if (plugin.getGuildManager().getGuild(p.getUniqueId()) == null) {
+                    p.sendMessage("§c§lERROR §8» §7You must be in a guild to toggle guild chat!");
+                    p.closeInventory();
+                    return;
+                }
+                boolean nowInGuildChat = plugin.getGuildManager().toggleGuildChat(p);
+                p.sendMessage("§b§lGUILD §8» §7Chat mode: " + (nowInGuildChat ? "§bGUILD" : "§aGLOBAL"));
+                plugin.getSettingsMenu().openChatSettings(p);
+                p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1.2f);
+                return;
+            }
+
             else if (clicked.getType() == Material.BELL) {
                 key = (clicked.getItemMeta().getDisplayName().contains("Mention")) ? "mention_sound" : "pm_sound";
             } else if (clicked.getType() == Material.OAK_SIGN) key = "global_chat";
@@ -145,22 +212,24 @@ public class SettingsListener implements Listener {
                 p.playSound(p.getLocation(), Sound.ENTITY_ITEM_FRAME_ROTATE_ITEM, 1f, 1f);
             }
             else if (clicked.getType() == Material.FEATHER) {
-                if (p.hasPermission("group.elite") || p.hasPermission("group.mvp") || p.isOp()) {
-                    boolean currentlyCanFly = p.getAllowFlight();
-                    p.setAllowFlight(!currentlyCanFly);
+                java.util.List<String> playerRanks = plugin.getStatsManager().getRanks(p.getUniqueId());
+                if (playerRanks.contains("ELITE") || playerRanks.contains("MVP") || playerRanks.contains("OWNER") || p.isOp()) {
+                    boolean willFly = !p.getAllowFlight();
+                    p.setAllowFlight(willFly);
+                    p.setFlying(willFly);
 
-                    if (!currentlyCanFly) {
-                        p.setFlying(true);
+                    if (willFly) {
                         p.sendMessage("§a§lSUCCESS §8» §7Flight §aENABLED§7!");
                     } else {
-                        p.setFlying(false); // Make sure they drop
                         p.sendMessage("§c§lSUCCESS §8» §7Flight §cDISABLED§7!");
                     }
 
                     plugin.getSettingsMenu().openGameplaySettings(p);
                     p.playSound(p.getLocation(), Sound.ENTITY_BAT_LOOP, 1f, 1.5f);
+
                 } else {
                     p.sendMessage("§c§lERROR §8» §7Only §bELITE §7and §aMVP §7can toggle flight!");
+                    p.closeInventory();
                 }
             }
             else if (clicked.getType() == Material.CLOCK) {

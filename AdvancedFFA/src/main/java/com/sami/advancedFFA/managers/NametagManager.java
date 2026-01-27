@@ -2,8 +2,9 @@ package com.sami.advancedFFA.managers;
 
 import com.sami.advancedFFA.Main;
 import com.sami.advancedFFA.Rank;
+import com.sami.advancedFFA.models.Guild;
+import com.sami.advancedFFA.utils.ColorTag;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
@@ -22,42 +23,49 @@ public class NametagManager {
 
     public void updateNametag(Player player) {
         UUID uuid = player.getUniqueId();
+        Guild g = plugin.getGuildManager().getGuild(uuid);
 
-        int level = plugin.getStatsManager().getLevel(uuid);
-        String color = plugin.getStatsManager().getLevelColor(uuid);
-        int streak = plugin.getStatsManager().getStreak(uuid);
-        Rank rank = plugin.getStatsManager().getHighestRank(uuid);
-
-        String rankPrefix = "";
-        String plainRankName = ChatColor.stripColor(rank.getPrefix()).trim();
-
-        if (!plainRankName.equalsIgnoreCase("Member") && !plainRankName.equalsIgnoreCase("Default")) {
-            rankPrefix = rank.getPrefix() + " ";
+        // DEBUG 1: Check if the manager even sees the player in a guild
+        if (g == null) {
+            Bukkit.getLogger().info("[DEBUG] No guild found for " + player.getName() + " in cache.");
+        } else {
+            Bukkit.getLogger().info("[DEBUG] Found guild " + g.getName() + " for " + player.getName());
         }
 
-        String prefix = color + "[" + level + "] " + rankPrefix;
-        String suffix = (streak > 0) ? " §6§l" + streak + "🔥" : "";
+        StringBuilder suffixBuilder = new StringBuilder();
 
-        String weight = getSortWeight(rank);
-        String teamName = weight + player.getName();
+        // Streak logic
+        int streak = plugin.getStatsManager().getStreak(uuid);
+        if (streak > 0) {
+            suffixBuilder.append(" §6").append(streak);
+        }
 
-        for (Team oldTeam : scoreboard.getTeams()) {
-            if (oldTeam.hasEntry(player.getName())) {
-                oldTeam.removeEntry(player.getName());
+        // Guild Tag logic
+        if (g != null) {
+            String colorData = g.getTagColor();
+            String tag = g.getTag();
+
+            // DEBUG 2: Check color data
+            Bukkit.getLogger().info("[DEBUG] ColorData: " + colorData + " | Tag: " + tag);
+
+            if (colorData != null && colorData.contains(":")) {
+                String[] hex = colorData.split(":");
+                suffixBuilder.append(" §8§l[").append(ColorTag.getAnimatedTag(tag, hex[0], hex[1], plugin.getAnimationFrame())).append("§8§l]");
+            } else {
+                suffixBuilder.append(" §8§l[").append(colorData != null ? colorData : "§b").append(tag).append("§8§l]");
             }
         }
 
-        Team team = scoreboard.getTeam(teamName);
-        if (team == null) {
-            team = scoreboard.registerNewTeam(teamName);
-        }
+        String suffix = suffixBuilder.toString();
+        Bukkit.getLogger().info("[DEBUG] Final Suffix for " + player.getName() + ": " + suffix);
 
-        team.setPrefix(prefix);
+        // Apply to scoreboard...
+        Team team = scoreboard.getTeam(getSortWeight(plugin.getStatsManager().getHighestRank(uuid)) + player.getName());
+        if (team == null) team = scoreboard.registerNewTeam(getSortWeight(plugin.getStatsManager().getHighestRank(uuid)) + player.getName());
+
+        team.setPrefix(plugin.getStatsManager().getLevelColor(uuid) + "[" + plugin.getStatsManager().getLevel(uuid) + "] §f");
         team.setSuffix(suffix);
         team.addEntry(player.getName());
-
-        player.setScoreboard(scoreboard);
-        player.setPlayerListName(prefix + "§f" + player.getName() + suffix);
     }
 
     private String getSortWeight(Rank rank) {
@@ -76,13 +84,9 @@ public class NametagManager {
     }
 
     public void removeNametag(Player player) {
-        for (Team team : scoreboard.getTeams()) {
-            if (team.hasEntry(player.getName())) {
-                team.removeEntry(player.getName());
-                if (team.getEntries().isEmpty()) {
-                    team.unregister();
-                }
-            }
+        Team team = scoreboard.getEntryTeam(player.getName());
+        if (team != null) {
+            team.removeEntry(player.getName());
         }
     }
 }
