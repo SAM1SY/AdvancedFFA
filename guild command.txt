@@ -1,0 +1,39 @@
+/g create <name> <tag> - create a guild
+/g disband
+/g invite <player>
+/g uninvite <player>
+/g join <guild>
+/g leave
+/g kick <player>
+/g list - list all online guilds
+/g rename <name>
+/g settag <tag>
+/g callout <message> - send a clear message to all online guild players
+/g color
+/g transfer <player> - transfer the leadership of your guild
+/g chat - toggles guild chat (this is what the xp bottle of chat settings for, displaying if the player is in guild chat or global chat occasionally)
+/g promote <player> - promote from member to officer, if officer to co-founder
+/g demote <player> - from officer to member, if co-founder to officer
+/g info <guild> - view info abt a guild (Name [tag]
+Leader: 
+Points: 
+Coins: 
+Point multiplier: default:1)
+/g who <player> - view info abt the guild of the player
+
+make a point system for guilds
+make it just perfect
+take your time and think wisely
+try to not make mistakes
+
+point system that gives a point every kill and the multiplier works like this
+
+default:1
+
++.1 (if a member of the guild has VIP rank)
+
++.2 (if a member of the guild has ELITE rank)
+
++.25 (if a member of the guild has MVP rank)
+
+every 100 point starting from 300 they get a coin, coins can buy tag colors and
