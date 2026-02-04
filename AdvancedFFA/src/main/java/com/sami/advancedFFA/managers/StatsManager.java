@@ -158,11 +158,40 @@ public class StatsManager {
     }
 
     public int getLevel(UUID uuid) {
-        return statsCache.containsKey(uuid) ? statsCache.get(uuid).level : 1;
+        if (statsCache.containsKey(uuid)) return statsCache.get(uuid).kills;
+
+        Map<String, Object> data = plugin.getDatabaseManager().loadPlayer(uuid);
+        return data.isEmpty() ? 0 : (int) data.get("level");
     }
 
     public int getStreak(UUID uuid) {
-        return statsCache.containsKey(uuid) ? statsCache.get(uuid).currentStreak : 0;
+        if (statsCache.containsKey(uuid)) return statsCache.get(uuid).kills;
+        Map<String, Object> data = plugin.getDatabaseManager().loadPlayer(uuid);
+        return data.isEmpty() ? 0 : (int) data.get("deaths");
+    }
+
+    public int getKills(UUID uuid) {
+        if (statsCache.containsKey(uuid)) return statsCache.get(uuid).kills;
+        Map<String, Object> data = plugin.getDatabaseManager().loadPlayer(uuid);
+        return data.isEmpty() ? 0 : (int) data.get("kills");
+    }
+
+    public int getDeaths(UUID uuid) {
+        if (statsCache.containsKey(uuid)) return statsCache.get(uuid).deaths;
+        Map<String, Object> data = plugin.getDatabaseManager().loadPlayer(uuid);
+        return data.isEmpty() ? 0 : (int) data.get("deaths");
+    }
+
+    public int getHighestStreak(UUID uuid) {
+        if (statsCache.containsKey(uuid)) return statsCache.get(uuid).bestStreak;
+        Map<String, Object> data = plugin.getDatabaseManager().loadPlayer(uuid);
+        return data.isEmpty() ? 0 : (int) data.get("best_streak");
+    }
+
+    public int getXP(UUID uuid) {
+        if (statsCache.containsKey(uuid)) return statsCache.get(uuid).xp;
+        Map<String, Object> data = plugin.getDatabaseManager().loadPlayer(uuid);
+        return data.isEmpty() ? 0 : (int) data.get("xp");
     }
 
     public String getLevelColor(UUID uuid) {

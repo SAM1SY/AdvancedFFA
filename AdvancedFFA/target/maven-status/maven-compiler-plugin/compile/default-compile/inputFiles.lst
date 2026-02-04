@@ -1,9 +1,11 @@
+C:\Users\samie\OneDrive\Bureau\adadsad\AdvancedFFA\AdvancedFFA\src\main\java\com\sami\advancedFFA\commands\DebugPermsCommand.java
 C:\Users\samie\OneDrive\Bureau\adadsad\AdvancedFFA\AdvancedFFA\src\main\java\com\sami\advancedFFA\commands\GuildCommand.java
 C:\Users\samie\OneDrive\Bureau\adadsad\AdvancedFFA\AdvancedFFA\src\main\java\com\sami\advancedFFA\commands\GuildTabCompleter.java
 C:\Users\samie\OneDrive\Bureau\adadsad\AdvancedFFA\AdvancedFFA\src\main\java\com\sami\advancedFFA\commands\KitCommand.java
 C:\Users\samie\OneDrive\Bureau\adadsad\AdvancedFFA\AdvancedFFA\src\main\java\com\sami\advancedFFA\commands\RankCommand.java
 C:\Users\samie\OneDrive\Bureau\adadsad\AdvancedFFA\AdvancedFFA\src\main\java\com\sami\advancedFFA\commands\RankTabCompleter.java
 C:\Users\samie\OneDrive\Bureau\adadsad\AdvancedFFA\AdvancedFFA\src\main\java\com\sami\advancedFFA\commands\SpawnCommand.java
+C:\Users\samie\OneDrive\Bureau\adadsad\AdvancedFFA\AdvancedFFA\src\main\java\com\sami\advancedFFA\commands\StatsCommand.java
 C:\Users\samie\OneDrive\Bureau\adadsad\AdvancedFFA\AdvancedFFA\src\main\java\com\sami\advancedFFA\listeners\CombatListener.java
 C:\Users\samie\OneDrive\Bureau\adadsad\AdvancedFFA\AdvancedFFA\src\main\java\com\sami\advancedFFA\listeners\DeathListener.java
 C:\Users\samie\OneDrive\Bureau\adadsad\AdvancedFFA\AdvancedFFA\src\main\java\com\sami\advancedFFA\listeners\GuildChatListener.java
@@ -17,6 +19,7 @@ C:\Users\samie\OneDrive\Bureau\adadsad\AdvancedFFA\AdvancedFFA\src\main\java\com
 C:\Users\samie\OneDrive\Bureau\adadsad\AdvancedFFA\AdvancedFFA\src\main\java\com\sami\advancedFFA\listeners\SettingsListener.java
 C:\Users\samie\OneDrive\Bureau\adadsad\AdvancedFFA\AdvancedFFA\src\main\java\com\sami\advancedFFA\listeners\SpawnProtectionListener.java
 C:\Users\samie\OneDrive\Bureau\adadsad\AdvancedFFA\AdvancedFFA\src\main\java\com\sami\advancedFFA\listeners\StatsListener.java
+C:\Users\samie\OneDrive\Bureau\adadsad\AdvancedFFA\AdvancedFFA\src\main\java\com\sami\advancedFFA\listeners\StatsPaperListener.java
 C:\Users\samie\OneDrive\Bureau\adadsad\AdvancedFFA\AdvancedFFA\src\main\java\com\sami\advancedFFA\Main.java
 C:\Users\samie\OneDrive\Bureau\adadsad\AdvancedFFA\AdvancedFFA\src\main\java\com\sami\advancedFFA\managers\DatabaseManager.java
 C:\Users\samie\OneDrive\Bureau\adadsad\AdvancedFFA\AdvancedFFA\src\main\java\com\sami\advancedFFA\managers\DataManager.java

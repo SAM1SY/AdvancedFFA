@@ -136,20 +136,25 @@ public final class Main extends JavaPlugin {
     }
 
     private void registerCommands() {
-        if (getCommand("rank") != null) {
-            getCommand("rank").setExecutor(new RankCommand(this));
-            getCommand("rank").setTabCompleter(new RankTabCompleter());
-        }
-        if (getCommand("kit") != null) {
-            getCommand("kit").setExecutor(new KitCommand(this));
-        }
-        if (getCommand("spawn") != null) {
-            getCommand("spawn").setExecutor(new SpawnCommand(this));
-        }
-        if (getCommand("guild") != null) {
-            getCommand("guild").setExecutor(new GuildCommand(this));
-            getCommand("guild").setTabCompleter(new GuildTabCompleter(this)); // Register here
-        }
+        getCommand("rank").setExecutor(new RankCommand(this));
+        getCommand("rank").setTabCompleter(new RankTabCompleter());
+        getCommand("rank").setPermission(null);
+
+        getCommand("kit").setExecutor(new KitCommand(this));
+        getCommand("kit").setPermission(null);
+
+        getCommand("spawn").setExecutor(new SpawnCommand(this));
+        getCommand("spawn").setPermission(null);
+
+        getCommand("guild").setExecutor(new GuildCommand(this));
+        getCommand("guild").setTabCompleter(new GuildTabCompleter(this));
+        getCommand("guild").setPermission(null);
+
+        getCommand("permsdebug").setExecutor(new DebugPermsCommand());
+        getCommand("permsdebug").setPermission(null);
+
+        getCommand("stats").setExecutor(new StatsCommand(this));
+        getCommand("stats").setPermission(null);
     }
 
     private void registerListeners() {
@@ -165,6 +170,7 @@ public final class Main extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new SettingsListener(this), this);
         getServer().getPluginManager().registerEvents(new GuildChatListener(this), this);
         getServer().getPluginManager().registerEvents(new GuildShopListener(this), this);
+        getServer().getPluginManager().registerEvents(new StatsPaperListener(), this);
     }
 
     private void startNpcTasks() {

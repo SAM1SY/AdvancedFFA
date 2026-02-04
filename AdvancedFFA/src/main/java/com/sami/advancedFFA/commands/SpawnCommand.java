@@ -29,6 +29,7 @@ public class SpawnCommand implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) return true;
         Player p = (Player) sender;
+        if (!sender.hasPermission("ffa.spawn.use")) return true;
 
         if (plugin.getCombatListener().isTagged(p)) {
             p.sendMessage("§c§lERROR §8» §7You cannot go to spawn while in combat!");
@@ -85,6 +86,9 @@ public class SpawnCommand implements CommandExecutor {
         ItemMeta emeraldItemMeta = emerald.getItemMeta();
         ItemStack star = new ItemStack(Material.NETHER_STAR);
         ItemMeta starItemMeta = star.getItemMeta();
+        ItemStack paper = new ItemStack(Material.PAPER);
+        ItemMeta pm = paper.getItemMeta();
+        if (pm != null) { pm.setDisplayName("§f§lStats §r§7(Right Click)"); paper.setItemMeta(pm); }
 
         if (emeraldItemMeta != null) {
             emeraldItemMeta.setDisplayName("§a§lLeaderBoard §7(Right Click)");
@@ -95,6 +99,7 @@ public class SpawnCommand implements CommandExecutor {
             star.setItemMeta(starItemMeta);
         }
 
+        p.getInventory().setItem(0, paper);
         p.getInventory().setItem(4, emerald);
         p.getInventory().setItem(8, star);
 

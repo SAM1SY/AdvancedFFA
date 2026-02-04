@@ -61,6 +61,8 @@ public class NPCListener implements Listener {
 
         p.teleport(spawnLoc);
         p.playSound(p.getLocation(), Sound.ENTITY_ARMADILLO_AMBIENT, 1f, 2f);
+        p.setFlying(false);
+        p.setAllowFlight(false);
 
         if (plugin.getKitManager() != null) {
             plugin.getKitManager().giveKit(p, mode);

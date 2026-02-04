@@ -108,6 +108,11 @@ public class DeathListener implements Listener {
         ItemMeta sm = star.getItemMeta();
         if (sm != null) { sm.setDisplayName("§b§lSettings §7(Right Click)"); star.setItemMeta(sm); }
 
+        ItemStack paper = new ItemStack(Material.PAPER);
+        ItemMeta pm = paper.getItemMeta();
+        if (pm != null) { pm.setDisplayName("§f§lStats §r§7(Right Click)"); paper.setItemMeta(pm); }
+
+        p.getInventory().setItem(0, paper);
         p.getInventory().setItem(4, emerald);
         p.getInventory().setItem(8, star);
     }

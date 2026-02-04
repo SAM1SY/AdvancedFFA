@@ -20,7 +20,7 @@ public class RankCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if (!sender.hasPermission("advancedranks.use")) {
+        if (!sender.hasPermission("ffa.rank.use")) {
             sender.sendMessage(ChatColor.RED + "You don't have permission to use this command.");
             return true;
         }

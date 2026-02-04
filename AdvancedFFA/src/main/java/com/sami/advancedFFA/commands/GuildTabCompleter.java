@@ -19,7 +19,7 @@ public class GuildTabCompleter implements TabCompleter {
 
     private final Main plugin;
     private final List<String> subs = Arrays.asList(
-            "create", "info", "invite", "join", "leave",
+            "create", "info", "invite", "join", "leave", "settag",
             "kick", "promote", "demote", "transfer", "disband", "chat", "color", "shop"
     );
 

@@ -23,49 +23,49 @@ public class NametagManager {
 
     public void updateNametag(Player player) {
         UUID uuid = player.getUniqueId();
+
+        int level = plugin.getStatsManager().getLevel(uuid);
+        String lColor = plugin.getStatsManager().getLevelColor(uuid);
+        Rank rank = plugin.getStatsManager().getHighestRank(uuid);
+        int streak = plugin.getStatsManager().getStreak(uuid);
         Guild g = plugin.getGuildManager().getGuild(uuid);
 
-        // DEBUG 1: Check if the manager even sees the player in a guild
-        if (g == null) {
-            Bukkit.getLogger().info("[DEBUG] No guild found for " + player.getName() + " in cache.");
-        } else {
-            Bukkit.getLogger().info("[DEBUG] Found guild " + g.getName() + " for " + player.getName());
-        }
+        String rankPrefix = (rank == Rank.MEMBER) ? "" : rank.getPrefix();
+        String prefix = lColor + "[" + level + "] " + rankPrefix;
 
-        StringBuilder suffixBuilder = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
+        if (streak > 0) sb.append(" §6").append(streak);
 
-        // Streak logic
-        int streak = plugin.getStatsManager().getStreak(uuid);
-        if (streak > 0) {
-            suffixBuilder.append(" §6").append(streak);
-        }
-
-        // Guild Tag logic
         if (g != null) {
+            if (sb.length() > 0) sb.append(" ");
             String colorData = g.getTagColor();
             String tag = g.getTag();
 
-            // DEBUG 2: Check color data
-            Bukkit.getLogger().info("[DEBUG] ColorData: " + colorData + " | Tag: " + tag);
-
             if (colorData != null && colorData.contains(":")) {
                 String[] hex = colorData.split(":");
-                suffixBuilder.append(" §8§l[").append(ColorTag.getAnimatedTag(tag, hex[0], hex[1], plugin.getAnimationFrame())).append("§8§l]");
+                sb.append(" §8§l[").append(ColorTag.getAnimatedTag(tag, hex[0], hex[1], plugin.getAnimationFrame())).append("§8§l]");
             } else {
-                suffixBuilder.append(" §8§l[").append(colorData != null ? colorData : "§b").append(tag).append("§8§l]");
+                sb.append(" §8§l[").append(colorData != null ? colorData : "§b").append(tag).append("§8§l]");
             }
         }
+        String suffix = sb.toString();
 
-        String suffix = suffixBuilder.toString();
-        Bukkit.getLogger().info("[DEBUG] Final Suffix for " + player.getName() + ": " + suffix);
+        Team oldTeam = scoreboard.getEntryTeam(player.getName());
+        if (oldTeam != null) {
+            oldTeam.removeEntry(player.getName());
+        }
 
-        // Apply to scoreboard...
-        Team team = scoreboard.getTeam(getSortWeight(plugin.getStatsManager().getHighestRank(uuid)) + player.getName());
-        if (team == null) team = scoreboard.registerNewTeam(getSortWeight(plugin.getStatsManager().getHighestRank(uuid)) + player.getName());
+        String teamName = getSortWeight(rank) + player.getName();
+        if (teamName.length() > 16) teamName = teamName.substring(0, 16);
 
-        team.setPrefix(plugin.getStatsManager().getLevelColor(uuid) + "[" + plugin.getStatsManager().getLevel(uuid) + "] §f");
+        Team team = scoreboard.getTeam(teamName);
+        if (team == null) team = scoreboard.registerNewTeam(teamName);
+
+        team.setPrefix(prefix);
         team.setSuffix(suffix);
         team.addEntry(player.getName());
+
+        player.setPlayerListName(prefix + player.getName() + suffix);
     }
 
     private String getSortWeight(Rank rank) {

@@ -22,6 +22,7 @@ public class GuildCommand implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) return true;
         Player p = (Player) sender;
+        if (!sender.hasPermission("ffa.guild.use")) return true;
         if (args.length == 0) { sendHelp(p); return true; }
 
         String sub = args[0].toLowerCase();

@@ -1,7 +1,9 @@
 com\sami\advancedFFA\commands\GuildTabCompleter.class
+com\sami\advancedFFA\commands\StatsCommand.class
 com\sami\advancedFFA\managers\LeaderboardManager.class
 com\sami\advancedFFA\listeners\JoinListener.class
 com\sami\advancedFFA\managers\StatsManager$PlayerStats.class
+com\sami\advancedFFA\listeners\StatsPaperListener.class
 com\sami\advancedFFA\managers\DatabaseManager.class
 com\sami\advancedFFA\managers\NametagManager$1.class
 com\sami\advancedFFA\utils\GuardTrait.class
@@ -17,6 +19,7 @@ com\sami\advancedFFA\listeners\DeathListener.class
 com\sami\advancedFFA\models\Guild.class
 com\sami\advancedFFA\managers\NametagManager.class
 com\sami\advancedFFA\models\FFAPlaceholders.class
+com\sami\advancedFFA\commands\DebugPermsCommand.class
 com\sami\advancedFFA\menus\GuildShop.class
 com\sami\advancedFFA\managers\DataManager.class
 com\sami\advancedFFA\listeners\CombatListener$1.class

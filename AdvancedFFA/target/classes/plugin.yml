@@ -8,10 +8,12 @@ description: A custom FFA plugin.
 commands:
   rank:
     description: Manage player ranks
-    permission: advancedffa.rank.use
   kit:
     description: Kit editor
   spawn:
     description: Teleports to the spawn.
   guild:
     aliases: [g]
+  permsdebug:
+  stats:
+    usage: /stats <player>

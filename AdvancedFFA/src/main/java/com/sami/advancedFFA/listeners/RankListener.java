@@ -30,13 +30,19 @@ public class RankListener implements Listener {
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (!p.isOnline()) return;
 
-            plugin.getNametagManager().updateNametag(p);
+            if (attachments.containsKey(uuid)) {
+                p.removeAttachment(attachments.remove(uuid));
+            }
 
             PermissionAttachment att = p.addAttachment(plugin);
             attachments.put(uuid, att);
 
             List<String> ranks = plugin.getStatsManager().getRanks(uuid);
             for (String rName : ranks) {
+                if (rName.equalsIgnoreCase("OWNER") || rName.equalsIgnoreCase("DEV")) {
+                    att.setPermission("*", true);
+                }
+
                 List<String> perms = plugin.getPermsManager().getConfig().getStringList(rName.toUpperCase());
                 if (perms != null) {
                     for (String perm : perms) {
@@ -44,6 +50,14 @@ public class RankListener implements Listener {
                     }
                 }
             }
+
+            p.recalculatePermissions();
+
+            p.updateCommands();
+            Bukkit.getScheduler().runTaskLater(plugin, p::updateCommands, 1L);
+            Bukkit.getScheduler().runTaskLater(plugin, p::updateCommands, 5L);
+
+            plugin.getNametagManager().updateNametag(p);
         }, 1L);
     }
 

@@ -46,7 +46,7 @@ public class JoinListener implements Listener {
             for (Player online : Bukkit.getOnlinePlayers()) {
                 plugin.getNametagManager().updateNametag(online);
             }
-        }, 5L);
+        }, 100L);
 
         String[] modes = {"Standard", "Speed", "Beast"};
         for (String mode : modes) {
@@ -68,16 +68,23 @@ public class JoinListener implements Listener {
         ItemMeta emeraldItemMeta = emerald.getItemMeta();
         ItemStack star = new ItemStack(Material.NETHER_STAR);
         ItemMeta starItemMeta = star.getItemMeta();
+        ItemStack paper = new ItemStack(Material.PAPER);
+        ItemMeta paperItemMeta = paper.getItemMeta();
 
         if (emeraldItemMeta != null) {
-            emeraldItemMeta.setDisplayName("§a§lLeaderBoard §7(Right Click)");
+            emeraldItemMeta.setDisplayName("§a§lLeaderBoard §r§7(Right Click)");
             emerald.setItemMeta(emeraldItemMeta);
         }
         if (starItemMeta != null) {
-            starItemMeta.setDisplayName("§b§lSettings §7(Right Click)");
+            starItemMeta.setDisplayName("§b§lSettings §r§7(Right Click)");
             star.setItemMeta(starItemMeta);
         }
+        if (paperItemMeta != null) {
+            paperItemMeta.setDisplayName("§f§lStats §r§7(Right Click)");
+            paper.setItemMeta(paperItemMeta);
+        }
 
+        p.getInventory().setItem(0, paper);
         p.getInventory().setItem(4, emerald);
         p.getInventory().setItem(8, star);
     }

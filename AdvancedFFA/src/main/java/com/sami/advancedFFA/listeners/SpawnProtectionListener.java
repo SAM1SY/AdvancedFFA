@@ -7,6 +7,7 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
@@ -29,6 +30,32 @@ public class SpawnProtectionListener implements Listener {
     }
 
     @EventHandler
+    public void onInventoryClick(org.bukkit.event.inventory.InventoryClickEvent e) {
+        if (!(e.getWhoClicked() instanceof Player)) return;
+        Player p = (Player) e.getWhoClicked();
+
+        if (isSpawnWorld(p.getWorld().getName())) {
+            e.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onOffHandSwap(org.bukkit.event.player.PlayerSwapHandItemsEvent e) {
+        if (isSpawnWorld(e.getPlayer().getWorld().getName())) {
+            if (e.getPlayer().isOp() && e.getPlayer().getGameMode() == GameMode.CREATIVE) return;
+            e.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onInventoryDrag(org.bukkit.event.inventory.InventoryDragEvent e) {
+        if (isSpawnWorld(e.getWhoClicked().getWorld().getName())) {
+            if (e.getWhoClicked().isOp() && e.getWhoClicked().getGameMode() == GameMode.CREATIVE) return;
+            e.setCancelled(true);
+        }
+    }
+
+    @EventHandler
     public void onBlockBreak(BlockBreakEvent e) {
         Player p = e.getPlayer();
         if (p.isOp() && p.getGameMode() == GameMode.CREATIVE) return;
@@ -39,7 +66,10 @@ public class SpawnProtectionListener implements Listener {
     @EventHandler
     public void onBlockInteract(PlayerInteractEvent e) {
         if (isSpawnWorld(e.getPlayer().getWorld().getName())) {
-            e.setCancelled(true);
+            if (e.getAction() == Action.RIGHT_CLICK_BLOCK || e.getAction() == Action.LEFT_CLICK_BLOCK) {
+                if (e.getPlayer().isOp() && e.getPlayer().getGameMode() == GameMode.CREATIVE) return;
+                e.setCancelled(true);
+            }
         }
     }
 

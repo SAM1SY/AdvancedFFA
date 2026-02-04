@@ -22,6 +22,7 @@ public class KitCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) return true;
+        if (!sender.hasPermission("ffa.kit.use")) return true;
         openModeSelector((Player) sender);
         return true;
     }

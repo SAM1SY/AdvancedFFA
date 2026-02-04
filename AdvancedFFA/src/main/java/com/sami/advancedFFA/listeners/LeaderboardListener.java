@@ -37,6 +37,7 @@ public class LeaderboardListener implements Listener {
             if (isLeaderboardItem(item)) {
                 e.setCancelled(true);
                 openLeaderboard(e.getPlayer());
+                e.getPlayer().performCommand("stats");
             }
         }
     }
